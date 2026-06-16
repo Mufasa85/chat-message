@@ -36,3 +36,10 @@ chat-app/
     │   └── rooms.js                # GET /rooms, POST /rooms, GET /rooms/:id/messages
     └── websocket/
         └── WsServer.js             # Gestion des événements temps réel
+
+
+   Terminal 1 - Backend
+cd server && npm run dev
+
+  Terminal 2 - Frontend
+cd client && npm run dev

@@ -2,6 +2,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ChatProvider } from './context/ChatContext';
 import AuthPage from './pages/AuthPage';
 import ChatPage from './pages/ChatPage';
+import './globals.css'
 
 function Inner() {
   const { token } = useAuth();
