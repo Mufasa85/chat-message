@@ -1,0 +1,72 @@
+import { createContext, useContext, useState, useCallback, useRef } from 'react';
+import { useWebSocket } from '../hooks/useWebSocket';
+import { useAuth } from './AuthContext';
+
+const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const ChatContext = createContext(null);
+
+export const ChatProvider = ({ children }) => {
+  const { token } = useAuth();
+  const [rooms,       setRooms]       = useState([]);
+  const [currentRoom, setCurrentRoom] = useState(null);
+  const [messages,    setMessages]    = useState([]);
+  const [onlineUsers, setOnlineUsers] = useState([]);
+  const [typingUsers, setTypingUsers] = useState([]);
+  const [connected,   setConnected]   = useState(false);
+  const emitRef = useRef(null);
+
+  const onMessage = useCallback(({ event, data }) => {
+    if (event === 'new_message') setMessages((prev) => [...prev, data]);
+    else if (event === 'room_users') setOnlineUsers(data.users);
+    else if (event === 'user_left')  setTypingUsers((prev) => prev.filter((u) => u.userId !== data.userId));
+    else if (event === 'typing') {
+      if (data.isTyping) setTypingUsers((prev) => prev.find((u) => u.userId === data.userId) ? prev : [...prev, { userId: data.userId, username: data.username }]);
+      else setTypingUsers((prev) => prev.filter((u) => u.userId !== data.userId));
+    }
+  }, []);
+
+  const { emit } = useWebSocket({ token, onMessage, onOpen: () => setConnected(true), onClose: () => setConnected(false) });
+  emitRef.current = emit;
+
+  const fetchRooms = useCallback(async () => {
+    const res = await fetch(`${API}/rooms`, { headers: { Authorization: `Bearer ${token}` } });
+    setRooms(await res.json());
+  }, [token]);
+
+  const joinRoom = useCallback(async (room) => {
+    setCurrentRoom(room); setMessages([]); setOnlineUsers([]); setTypingUsers([]);
+    const res = await fetch(`${API}/rooms/${room._id}/messages`, { headers: { Authorization: `Bearer ${token}` } });
+    setMessages(await res.json());
+    emitRef.current('join_room', { roomId: room._id });
+  }, [token]);
+
+  const sendMessage = useCallback((content) => {
+    if (!currentRoom || !content.trim()) return;
+    emitRef.current('send_message', { roomId: currentRoom._id, content });
+  }, [currentRoom]);
+
+  const sendTyping = useCallback((isTyping) => {
+    if (!currentRoom) return;
+    emitRef.current('typing', { roomId: currentRoom._id, isTyping });
+  }, [currentRoom]);
+
+  const createRoom = useCallback(async (name, description = '') => {
+    const res = await fetch(`${API}/rooms`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, description }),
+    });
+    if (!res.ok) throw new Error((await res.json()).error);
+    const room = await res.json();
+    setRooms((prev) => [room, ...prev]);
+    return room;
+  }, [token]);
+
+  return (
+    <ChatContext.Provider value={{ rooms, currentRoom, messages, onlineUsers, typingUsers, connected, fetchRooms, joinRoom, sendMessage, sendTyping, createRoom }}>
+      {children}
+    </ChatContext.Provider>
+  );
+};
+
+export const useChat = () => useContext(ChatContext);
