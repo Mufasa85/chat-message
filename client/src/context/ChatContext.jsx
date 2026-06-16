@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useRef } from 'react';
+import { createContext, useContext, useState, useCallback, useRef, useMemo } from 'react';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useAuth } from './AuthContext';
 
@@ -15,6 +15,7 @@ export const ChatProvider = ({ children }) => {
   const [connected,   setConnected]   = useState(false);
   const emitRef = useRef(null);
 
+  // Memoize callbacks to prevent WebSocket reconnection on every render
   const onMessage = useCallback(({ event, data }) => {
     if (event === 'new_message') setMessages((prev) => [...prev, data]);
     else if (event === 'room_users') setOnlineUsers(data.users);
@@ -25,7 +26,17 @@ export const ChatProvider = ({ children }) => {
     }
   }, []);
 
-  const { emit } = useWebSocket({ token, onMessage, onOpen: () => setConnected(true), onClose: () => setConnected(false) });
+  const onOpen = useCallback(() => {
+    console.log('[WS] Connecté');
+    setConnected(true);
+  }, []);
+
+  const onClose = useCallback(() => {
+    console.log('[WS] Déconnecté');
+    setConnected(false);
+  }, []);
+
+  const { emit } = useWebSocket({ token, onMessage, onOpen, onClose });
   emitRef.current = emit;
 
   const fetchRooms = useCallback(async () => {
@@ -62,8 +73,13 @@ export const ChatProvider = ({ children }) => {
     return room;
   }, [token]);
 
+  const value = useMemo(() => ({
+    rooms, currentRoom, messages, onlineUsers, typingUsers, connected, 
+    fetchRooms, joinRoom, sendMessage, sendTyping, createRoom
+  }), [rooms, currentRoom, messages, onlineUsers, typingUsers, connected, fetchRooms, joinRoom, sendMessage, sendTyping, createRoom]);
+
   return (
-    <ChatContext.Provider value={{ rooms, currentRoom, messages, onlineUsers, typingUsers, connected, fetchRooms, joinRoom, sendMessage, sendTyping, createRoom }}>
+    <ChatContext.Provider value={value}>
       {children}
     </ChatContext.Provider>
   );

@@ -131,7 +131,8 @@ const initWsServer = (server) => {
     try { 
       user = await verifyWsToken(query.token); 
     }
-    catch { 
+    catch (err) { 
+      console.error('[WS] Auth échouée:', err.message);
       ws.close(4001, 'Unauthorized'); 
       return; 
     }

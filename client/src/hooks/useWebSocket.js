@@ -16,13 +16,19 @@ export const useWebSocket = ({ token, onMessage, onOpen, onClose }) => {
     ws.onmessage = (e) => {
       try { onMessage?.(JSON.parse(e.data)); } catch { console.error('[WS] Message non parsable'); }
     };
-    ws.onclose = () => {
+    ws.onclose = (e) => {
+      console.log('[WS] Fermé - Code:', e.code, 'Raison:', e.reason || 'aucune');
       onClose?.();
       const delay = Math.min(1000 * 2 ** attemptsRef.current, 30000);
       attemptsRef.current += 1;
       reconnectTimer.current = setTimeout(connect, delay);
     };
-    ws.onerror = (e) => console.error('[WS] Erreur:', e);
+
+    ws.onerror = (e) => {
+      console.error('[WS] Erreur:', e);
+      console.error('[WS] URL:', ws.url);
+      console.error('[WS] ReadyState:', ws.readyState);
+    };
   }, [token, onMessage, onOpen, onClose]);
 
   useEffect(() => {

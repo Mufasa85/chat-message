@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo } from 'react';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 const AuthContext = createContext(null);
@@ -36,8 +36,10 @@ export const AuthProvider = ({ children }) => {
     setToken(null); setUser(null);
   }, []);
 
+  const value = useMemo(() => ({ user, token, login, register, logout }), [user, token, login, register, logout]);
+
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
