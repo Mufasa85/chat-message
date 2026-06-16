@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import './globals.css'
+
 
 export default function AuthPage() {
   const { login, register } = useAuth();

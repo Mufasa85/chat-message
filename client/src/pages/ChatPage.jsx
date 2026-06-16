@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useChat } from '../context/ChatContext';
-import './globals.css'
+
 
 function MessageBubble({ msg, isOwn }) {
   return (
