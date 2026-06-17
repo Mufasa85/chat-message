@@ -2,6 +2,11 @@ import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useChat } from '../context/ChatContext';
 
+// Construire les options de durée depuis l'environnement
+const durations = import.meta.env.VITE_EPHEMERAL_DURATIONS?.split(',').map(Number) || [10, 30, 60, 120, 300];
+const labels = import.meta.env.VITE_EPHEMERAL_LABELS?.split(',') || ['10 sec', '30 sec', '1 min', '2 min', '5 min'];
+const ttlOptions = durations.map((value, i) => ({ value, label: labels[i] || `${value}s` }));
+
 
 function MessageBubble({ msg, isOwn }) {
   return (
@@ -16,12 +21,9 @@ function MessageBubble({ msg, isOwn }) {
       )}
       <div className={`max-w-[75%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col`}>
         {!isOwn && (
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-white font-medium text-sm">{msg.author?.username}</span>
-            <span className="text-gray-500 text-xs">
-              {new Date(msg.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-            </span>
-          </div>
+          <span className="text-gray-500 text-xs mb-1">
+            {msg.author?.username} • {new Date(msg.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+          </span>
         )}
         <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed break-words ${
           isOwn 
@@ -31,7 +33,7 @@ function MessageBubble({ msg, isOwn }) {
           {msg.content}
         </div>
         {isOwn && (
-          <span className="text-gray-500 text-xs mt-1 mr-1">
+          <span className="text-gray-500 text-xs mt-1">
             {new Date(msg.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
           </span>
         )}
@@ -43,7 +45,10 @@ function MessageBubble({ msg, isOwn }) {
 function MessageInput() {
   const { sendMessage, sendTyping, currentRoom } = useChat();
   const [text, setText] = useState('');
+  const [selectedTtl, setSelectedTtl] = useState(null);
+  const [showMenu, setShowMenu] = useState(false);
   const timer = useRef(null);
+  const menuRef = useRef(null);
 
   const handleChange = (e) => {
     setText(e.target.value);
@@ -54,15 +59,69 @@ function MessageInput() {
 
   const handleSend = () => {
     if (!text.trim()) return;
-    sendMessage(text);
+    sendMessage(text, selectedTtl !== null, selectedTtl || 300);
     setText('');
+    setSelectedTtl(null);
     clearTimeout(timer.current);
     sendTyping(false);
+  };
+
+  const handleSelectTtl = (value) => {
+    setSelectedTtl(value);
+    setShowMenu(false);
+  };
+
+  const clearTtl = () => {
+    setSelectedTtl(null);
   };
 
   return (
     <div className="p-4">
       <div className="flex items-end gap-3 bg-slate-800/50 rounded-2xl border border-slate-700/50 px-4 py-3">
+        {/* Bouton durée */}
+        <div className="relative" ref={menuRef}>
+          <button
+            onClick={() => setShowMenu(!showMenu)}
+            disabled={!currentRoom}
+            className={`p-2 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+              selectedTtl !== null 
+                ? 'bg-indigo-600 text-white' 
+                : 'text-gray-500 hover:text-gray-300 hover:bg-slate-700/50'
+            }`}
+            title="Choisir la durée du message"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </button>
+          
+          {/* Menu des durées */}
+          {showMenu && (
+            <div className="absolute bottom-full left-0 mb-2 bg-[#313338] rounded-lg shadow-xl border border-black/30 py-2 min-w-[120px]">
+              <div className="px-3 py-1 text-gray-400 text-xs uppercase tracking-wider">Durée</div>
+              {ttlOptions.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => handleSelectTtl(option.value)}
+                  className={`w-full px-3 py-1.5 text-left text-sm hover:bg-[#404249] transition-colors ${
+                    selectedTtl === option.value ? 'text-indigo-400' : 'text-gray-300'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+              {selectedTtl !== null && (
+                <button
+                  onClick={clearTtl}
+                  className="w-full px-3 py-1.5 text-left text-sm hover:bg-[#404249] transition-colors text-red-400 border-t border-gray-700 mt-1"
+                >
+                  Annuler
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+        
         <textarea
           className="flex-1 bg-transparent text-white placeholder-slate-500 text-sm resize-none outline-none max-h-32"
           placeholder={currentRoom ? `Envoyer un message dans #${currentRoom.name}` : 'Rejoins un salon pour discuter...'}
@@ -72,6 +131,7 @@ function MessageInput() {
           disabled={!currentRoom}
           rows={1}
         />
+        
         <button
           onClick={handleSend}
           disabled={!currentRoom || !text.trim()}
@@ -88,7 +148,7 @@ function MessageInput() {
 
 export default function ChatPage() {
   const { user, logout } = useAuth();
-  const { messages, currentRoom, onlineUsers, typingUsers, connected, rooms, joinRoom, fetchRooms, createRoom } = useChat();
+  const { messages, currentRoom, onlineUsers, typingUsers, rooms, joinRoom, fetchRooms, createRoom } = useChat();
   const [showCreate, setShowCreate] = useState(false);
   const [newRoomName, setNewRoomName] = useState('');
   const [newRoomDesc, setNewRoomDesc] = useState('');
@@ -140,7 +200,6 @@ export default function ChatPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-3">
-          {/* TEXT CHANNELS section */}
           <div className="mb-4">
             <div className="flex items-center justify-between px-1 mb-2">
               <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Salons texte</span>
@@ -214,7 +273,7 @@ export default function ChatPage() {
               <span className="text-gray-400 text-sm">{currentRoom.description || 'Aucun sujet'}</span>
             </>
           )}
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto">
             <button 
               onClick={() => setShowUserPanel(!showUserPanel)}
               className="text-gray-400 hover:text-white p-1"

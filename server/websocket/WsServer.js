@@ -83,7 +83,7 @@ const handleJoinRoom = async (ws, { roomId }) => {
   send(ws, 'joined_room', { roomId });
 };
 
-const handleSendMessage = async (ws, { roomId, content }) => {
+const handleSendMessage = async (ws, { roomId, content, ephemeral = false, ttl = 300 }) => {
   const state = clients.get(ws);
   if (!state || !content?.trim()) return;
   
@@ -91,11 +91,24 @@ const handleSendMessage = async (ws, { roomId, content }) => {
   const trimmedContent = content.trim().substring(0, 2000);
   
   try {
-    const message = await Message.create({ 
-      room: roomId, 
-      author: state.user._id, 
-      content: trimmedContent 
-    });
+    let message;
+    
+    if (ephemeral) {
+      // Créer un message éphémère avec le TTL spécifié
+      message = await Message.createEphemeral({
+        room: roomId,
+        author: state.user._id,
+        content: trimmedContent
+      }, ttl);
+    } else {
+      // Message normal
+      message = await Message.create({
+        room: roomId,
+        author: state.user._id,
+        content: trimmedContent
+      });
+    }
+    
     await message.populate('author', 'username avatar');
     
     broadcast(roomId, 'new_message', {
@@ -104,6 +117,9 @@ const handleSendMessage = async (ws, { roomId, content }) => {
       author: { _id: state.user._id, username: state.user.username, avatar: state.user.avatar },
       content: message.content,
       createdAt: message.createdAt,
+      ephemeral: message.ephemeral,
+      ttl: message.ttl,
+      expiresAt: message.expiresAt,
     });
   } catch (err) {
     send(ws, 'error', { message: "Erreur lors de l'envoi du message" });

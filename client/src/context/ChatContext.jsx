@@ -51,9 +51,14 @@ export const ChatProvider = ({ children }) => {
     emitRef.current('join_room', { roomId: room._id });
   }, [token]);
 
-  const sendMessage = useCallback((content) => {
+  const sendMessage = useCallback((content, ephemeral = false, ttl = 300) => {
     if (!currentRoom || !content.trim()) return;
-    emitRef.current('send_message', { roomId: currentRoom._id, content });
+    emitRef.current('send_message', { 
+      roomId: currentRoom._id, 
+      content,
+      ephemeral,
+      ttl
+    });
   }, [currentRoom]);
 
   const sendTyping = useCallback((isTyping) => {
