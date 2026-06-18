@@ -83,30 +83,37 @@ const handleJoinRoom = async (ws, { roomId }) => {
   send(ws, 'joined_room', { roomId });
 };
 
-const handleSendMessage = async (ws, { roomId, content, ephemeral = false, ttl = 300 }) => {
+const handleSendMessage = async (ws, { roomId, content, type, attachment, ephemeral = false, ttl = 300 }) => {
   const state = clients.get(ws);
-  if (!state || !content?.trim()) return;
+  if (!state) return;
+  
+  // Pour les messages texte, le contenu est requis
+  if (type === 'text' || !type) {
+    if (!content?.trim()) return;
+  }
   
   // Limiter la longueur du message
-  const trimmedContent = content.trim().substring(0, 2000);
+  const trimmedContent = content?.trim()?.substring(0, 2000) || '';
   
   try {
     let message;
+    const msgData = {
+      room: roomId,
+      author: state.user._id,
+      content: trimmedContent,
+      type: type || 'text',
+      attachment: attachment || undefined
+    };
     
     if (ephemeral) {
       // Créer un message éphémère avec le TTL spécifié
       message = await Message.createEphemeral({
-        room: roomId,
-        author: state.user._id,
-        content: trimmedContent
+        ...msgData,
+        ephemeral: true
       }, ttl);
     } else {
       // Message normal
-      message = await Message.create({
-        room: roomId,
-        author: state.user._id,
-        content: trimmedContent
-      });
+      message = await Message.create(msgData);
     }
     
     await message.populate('author', 'username avatar');
@@ -116,6 +123,8 @@ const handleSendMessage = async (ws, { roomId, content, ephemeral = false, ttl =
       room: roomId,
       author: { _id: state.user._id, username: state.user.username, avatar: state.user.avatar },
       content: message.content,
+      type: message.type,
+      attachment: message.attachment,
       createdAt: message.createdAt,
       ephemeral: message.ephemeral,
       ttl: message.ttl,

@@ -6,6 +6,7 @@ const cors = require('cors');
 
 const authRoutes = require('./routes/auth');
 const roomRoutes = require('./routes/rooms');
+const uploadRoutes = require('./routes/upload');
 const { initWsServer } = require('./websocket/WsServer');
 const cleanupService = require('./services/cleanupExpiredMessages');
 
@@ -33,12 +34,14 @@ app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
+app.use('/api/upload', uploadRoutes);
 app.get('/api/health', (_, res) => res.json({ status: 'ok' }));
 
 initWsServer(server);
 
 const PORT = process.env.PORT || 3001;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/chatapp';
+
 
 mongoose
   .connect(MONGO_URI)

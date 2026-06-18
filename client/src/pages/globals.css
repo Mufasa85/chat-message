@@ -167,3 +167,16 @@
     @apply font-sans;
   }
 }
+
+/* Fix pour que le header reste visible sous la barre d'adresse mobile */
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+.main-content {
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}

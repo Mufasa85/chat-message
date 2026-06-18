@@ -24,6 +24,8 @@ export const ChatProvider = ({ children }) => {
       if (data.isTyping) setTypingUsers((prev) => prev.find((u) => u.userId === data.userId) ? prev : [...prev, { userId: data.userId, username: data.username }]);
       else setTypingUsers((prev) => prev.filter((u) => u.userId !== data.userId));
     }
+    // Gérer les messages uploadés (API REST)
+    else if (event === 'message_uploaded') setMessages((prev) => [...prev, data]);
   }, []);
 
   const onOpen = useCallback(() => {
@@ -56,8 +58,19 @@ export const ChatProvider = ({ children }) => {
     emitRef.current('send_message', { 
       roomId: currentRoom._id, 
       content,
+      type: 'text',
       ephemeral,
       ttl
+    });
+  }, [currentRoom]);
+
+  const sendGiphy = useCallback((gif) => {
+    if (!currentRoom) return;
+    emitRef.current('send_message', {
+      roomId: currentRoom._id,
+      content: gif.title || '',
+      type: 'giphy',
+      attachment: { url: gif.original, giphyId: gif.id, giphyTitle: gif.title, width: gif.width, height: gif.height },
     });
   }, [currentRoom]);
 
@@ -65,6 +78,15 @@ export const ChatProvider = ({ children }) => {
     if (!currentRoom) return;
     emitRef.current('typing', { roomId: currentRoom._id, isTyping });
   }, [currentRoom]);
+
+  // Ajouter un message directement (utilisé pour les uploads de fichiers)
+  const addMessage = useCallback((message) => {
+    setMessages((prev) => {
+      // Éviter les doublons
+      if (prev.some((m) => m._id === message._id)) return prev;
+      return [...prev, message];
+    });
+  }, []);
 
   const createRoom = useCallback(async (name, description = '') => {
     const res = await fetch(`${API}/rooms`, {
@@ -80,8 +102,8 @@ export const ChatProvider = ({ children }) => {
 
   const value = useMemo(() => ({
     rooms, currentRoom, messages, onlineUsers, typingUsers, connected, 
-    fetchRooms, joinRoom, sendMessage, sendTyping, createRoom
-  }), [rooms, currentRoom, messages, onlineUsers, typingUsers, connected, fetchRooms, joinRoom, sendMessage, sendTyping, createRoom]);
+    fetchRooms, joinRoom, sendMessage, sendGiphy, sendTyping, createRoom, addMessage
+  }), [rooms, currentRoom, messages, onlineUsers, typingUsers, connected, fetchRooms, joinRoom, sendMessage, sendGiphy, sendTyping, createRoom, addMessage]);
 
   return (
     <ChatContext.Provider value={value}>
@@ -91,3 +113,5 @@ export const ChatProvider = ({ children }) => {
 };
 
 export const useChat = () => useContext(ChatContext);
+
+

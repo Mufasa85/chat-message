@@ -1,54 +1,33 @@
 import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useChat } from '../context/ChatContext';
+import { useFileUpload } from '../hooks/useFileUpload.jsx';
+import GiphyPicker from '../../components/GiphyPicker';
+import MessageBubble from '../../components/MessageBubble';
 
 // Construire les options de durée depuis l'environnement
 const durations = import.meta.env.VITE_EPHEMERAL_DURATIONS?.split(',').map(Number) || [10, 30, 60, 120, 300];
 const labels = import.meta.env.VITE_EPHEMERAL_LABELS?.split(',') || ['10 sec', '30 sec', '1 min', '2 min', '5 min'];
 const ttlOptions = durations.map((value, i) => ({ value, label: labels[i] || `${value}s` }));
 
-
-function MessageBubble({ msg, isOwn }) {
-  return (
-    <div className={`group flex gap-3 ${isOwn ? 'flex-row-reverse' : 'flex-row'} hover:bg-slate-800/30 -mx-4 px-4 py-1 rounded-lg transition-colors`}>
-      {!isOwn && (
-        <div 
-          className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0 mt-0.5"
-          style={{ background: msg.author?.avatar || '#6366f1' }}
-        >
-          {msg.author?.username?.[0]?.toUpperCase()}
-        </div>
-      )}
-      <div className={`max-w-[75%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col`}>
-        {!isOwn && (
-          <span className="text-gray-500 text-xs mb-1">
-            {msg.author?.username} • {new Date(msg.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-          </span>
-        )}
-        <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed break-words ${
-          isOwn 
-            ? 'bg-indigo-600 text-white rounded-br-sm' 
-            : 'bg-slate-700/80 text-gray-100 rounded-bl-sm'
-        }`}>
-          {msg.content}
-        </div>
-        {isOwn && (
-          <span className="text-gray-500 text-xs mt-1">
-            {new Date(msg.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function MessageInput() {
-  const { sendMessage, sendTyping, currentRoom } = useChat();
+function MessageInput({ token }) {
+  const { sendMessage, sendTyping, sendGiphy, currentRoom, addMessage } = useChat();
   const [text, setText] = useState('');
   const [selectedTtl, setSelectedTtl] = useState(null);
   const [showMenu, setShowMenu] = useState(false);
+  const [showGiphy, setShowGiphy] = useState(false);
   const timer = useRef(null);
   const menuRef = useRef(null);
+  const { uploading, progress, FileInput } = useFileUpload({ 
+    token, 
+    onUploaded: () => {},
+    onMessageUploaded: (msg) => {
+      // Ajouter le message uploadé à la liste
+      if (currentRoom?._id === msg.room) {
+        addMessage(msg);
+      }
+    }
+  });
 
   const handleChange = (e) => {
     setText(e.target.value);
@@ -75,14 +54,26 @@ function MessageInput() {
     setSelectedTtl(null);
   };
 
+  const handleGiphySelect = (gif) => {
+    sendGiphy(gif);
+    setShowGiphy(false);
+  };
+
   return (
-    <div className="p-4">
+    <div className="p-4 relative">
+      {/* Barre de progression upload */}
+      {uploading && (
+        <div className="absolute top-0 left-0 right-0 h-1 bg-slate-700/50">
+          <div className="h-full bg-indigo-500 transition-all duration-200" style={{ width: `${progress}%` }} />
+        </div>
+      )}
+      
       <div className="flex items-end gap-3 bg-slate-800/50 rounded-2xl border border-slate-700/50 px-4 py-3">
         {/* Bouton durée */}
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setShowMenu(!showMenu)}
-            disabled={!currentRoom}
+            disabled={!currentRoom || uploading}
             className={`p-2 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
               selectedTtl !== null 
                 ? 'bg-indigo-600 text-white' 
@@ -122,19 +113,32 @@ function MessageInput() {
           )}
         </div>
         
+        {/* Bouton fichier */}
+        <FileInput roomId={currentRoom?._id} disabled={!currentRoom || uploading} />
+        
+        {/* Bouton GIF */}
+        <button
+          onClick={() => setShowGiphy(!showGiphy)}
+          disabled={!currentRoom || uploading}
+          className="text-gray-500 hover:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed p-2 rounded-lg hover:bg-slate-700/50 transition-all"
+          title="Envoyer un GIF"
+        >
+          <span className="text-lg">🎬</span>
+        </button>
+        
         <textarea
           className="flex-1 bg-transparent text-white placeholder-slate-500 text-sm resize-none outline-none max-h-32"
-          placeholder={currentRoom ? `Envoyer un message dans #${currentRoom.name}` : 'Rejoins un salon pour discuter...'}
+          placeholder={currentRoom ? `Envoyer un message dans ${currentRoom.name}` : 'Rejoins un salon pour discuter...'}
           value={text}
           onChange={handleChange}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-          disabled={!currentRoom}
+          disabled={!currentRoom || uploading}
           rows={1}
         />
         
         <button
           onClick={handleSend}
-          disabled={!currentRoom || !text.trim()}
+          disabled={!currentRoom || !text.trim() || uploading}
           className="text-indigo-400 hover:text-indigo-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed p-1"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,17 +146,25 @@ function MessageInput() {
           </svg>
         </button>
       </div>
+      
+      {/* Giphy Picker */}
+      {showGiphy && (
+        <div className="absolute bottom-full right-0 mb-2 z-50">
+          <GiphyPicker token={token} onSelect={handleGiphySelect} onClose={() => setShowGiphy(false)} />
+        </div>
+      )}
     </div>
   );
 }
 
 export default function ChatPage() {
-  const { user, logout } = useAuth();
+  const { user, token, logout } = useAuth();
   const { messages, currentRoom, onlineUsers, typingUsers, rooms, joinRoom, fetchRooms, createRoom } = useChat();
   const [showCreate, setShowCreate] = useState(false);
   const [newRoomName, setNewRoomName] = useState('');
   const [newRoomDesc, setNewRoomDesc] = useState('');
   const [showUserPanel, setShowUserPanel] = useState(true);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const bottomRef = useRef(null);
 
   useEffect(() => { fetchRooms(); }, [fetchRooms]);
@@ -170,24 +182,86 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-screen bg-[#1a1a1a]">
-      {/* Servers Sidebar */}
-      <div className="w-16 bg-[#1a1a1a] flex flex-col items-center py-3 gap-2 border-r border-black/30">
-        <button className="w-12 h-12 rounded-2xl bg-[#313338] hover:rounded-xl transition-all hover:bg-indigo-600 flex items-center justify-center group">
+    <div className="flex h-dvh bg-[#1a1a1a]">
+      {/* Mobile Sidebar Overlay */}
+      {mobileSidebarOpen && (
+        <div className="fixed inset-0 z-40 flex">
+          <div className="flex-1 bg-black/60" onClick={() => setMobileSidebarOpen(false)}></div>
+          <div className="w-64 bg-[#1e1f22] flex flex-col h-full">
+            <div className="p-4 border-b border-black/30 flex items-center justify-between">
+              <h2 className="text-white font-semibold">Serveur</h2>
+              <button onClick={() => setMobileSidebarOpen(false)} className="text-gray-400 hover:text-white">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-3">
+              <div className="flex items-center justify-between px-1 mb-2">
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Salons texte</span>
+                <button onClick={() => { setShowCreate(true); setMobileSidebarOpen(false); }} className="text-gray-500 hover:text-white transition-colors">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
+              </div>
+              <div className="space-y-0.5">
+                {rooms.map((room) => (
+                  <div
+                    key={room._id}
+                    onClick={() => { joinRoom(room); setMobileSidebarOpen(false); }}
+                    className={`flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors ${
+                      currentRoom?._id === room._id ? 'bg-[#404249] text-white' : 'text-gray-400 hover:bg-[#35373c] hover:text-white'
+                    }`}
+                  >
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    <span className="text-sm truncate">{room.name}</span>
+                  </div>
+                ))}
+                {rooms.length === 0 && (
+                  <p className="text-gray-500 text-xs px-2 py-4 text-center">Aucun salon</p>
+                )}
+              </div>
+            </div>
+            <div className="mt-auto bg-[#232428] p-2">
+              <div className="flex items-center gap-2 px-2 py-1.5 rounded bg-[#35363c]">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold" style={{ background: user?.avatar || '#6366f1' }}>
+                  {user?.username?.[0]?.toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white text-sm font-medium truncate">{user?.username}</p>
+                  <p className="text-gray-400 text-xs">En ligne</p>
+                </div>
+                <button onClick={logout} className="text-gray-400 hover:text-white p-1">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Servers Sidebar (hidden on mobile) */}
+      <div className="hidden md:flex w-16 bg-[#1a1a1a] flex flex-col items-center py-3 gap-2 border-r border-black/30">
+        <button onClick={() => setMobileSidebarOpen(true)} className="w-12 h-12 rounded-2xl bg-[#313338] hover:rounded-xl transition-all hover:bg-indigo-600 flex items-center justify-center group">
           <svg className="w-6 h-6 text-indigo-400 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
         </button>
         <div className="w-8 h-0.5 bg-[#313338] rounded-full my-1"></div>
-        <button className="w-12 h-12 rounded-2xl bg-[#313338] hover:rounded-xl transition-all hover:bg-green-600 flex items-center justify-center">
+        <button onClick={() => { setShowCreate(true); }} className="w-12 h-12 rounded-2xl bg-[#313338] hover:rounded-xl transition-all hover:bg-green-600 flex items-center justify-center">
           <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
         </button>
       </div>
 
-      {/* Channels Sidebar */}
-      <div className="w-60 bg-[#1e1f22] flex flex-col">
+      {/* Desktop Channels Sidebar */}
+      <div className="hidden md:flex w-60 bg-[#1e1f22] flex-col">
         <div className="p-4 border-b border-black/30">
           <div className="flex items-center justify-between">
             <h2 className="text-white font-semibold">Serveur Discord-like</h2>
@@ -260,20 +334,31 @@ export default function ChatPage() {
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col bg-[#2b2d31]">
         {/* Channel Header */}
-        <div className="h-12 px-4 flex items-center gap-3 border-b border-black/30 shadow-sm">
-          <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="h-14 px-4 flex items-center gap-2 border-b border-black/30 shadow-sm bg-[#313338]">
+          <button 
+            onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+            className="md:hidden text-white hover:text-indigo-400 p-2 bg-[#2b2d31] rounded-lg mr-2"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
-          <span className="text-white font-semibold">
-            {currentRoom ? currentRoom.name : 'Bienvenue'}
+          <span className="text-white font-bold text-base">
+            {currentRoom ? ` ${currentRoom.name}` : 'Bienvenue'}
           </span>
           {currentRoom && (
             <>
-              <div className="w-px h-5 bg-gray-600"></div>
-              <span className="text-gray-400 text-sm">{currentRoom.description || 'Aucun sujet'}</span>
+              <div className="w-px h-4 bg-gray-600 mx-2"></div>
+              <span className="text-gray-400 text-sm hidden sm:inline">{currentRoom.description || 'Aucun sujet'}</span>
             </>
           )}
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
+            {currentRoom && (
+              <span className="text-xs text-gray-500 hidden sm:inline">{onlineUsers.length} en ligne</span>
+            )}
             <button 
               onClick={() => setShowUserPanel(!showUserPanel)}
               className="text-gray-400 hover:text-white p-1"
@@ -321,12 +406,23 @@ export default function ChatPage() {
           <div ref={bottomRef} />
         </div>
 
-        <MessageInput />
+        <MessageInput token={token} />
+        
+        {/* Mobile Footer */}
+        <div className="md:hidden h-10 px-4 flex items-center justify-between bg-[#232428] border-t border-black/30">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-semibold" style={{ background: user?.avatar || '#6366f1' }}>
+              {user?.username?.[0]?.toUpperCase()}
+            </div>
+            <span className="text-white text-xs font-medium">{user?.username}</span>
+          </div>
+          <span className="text-green-500 text-xs">● En ligne</span>
+        </div>
       </div>
 
-      {/* Users Panel */}
+      {/* Users Panel (hidden on mobile) */}
       {currentRoom && showUserPanel && (
-        <div className="w-60 bg-[#1e1f22] border-l border-black/30">
+        <div className="hidden lg:flex w-60 bg-[#1e1f22] border-l border-black/30">
           <div className="p-4">
             <h3 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-4">
               En ligne — {onlineUsers.length}
