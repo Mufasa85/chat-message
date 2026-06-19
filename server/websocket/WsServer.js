@@ -7,6 +7,7 @@ const User = require('../models/User');
 const rooms = new Map(); // roomId → Set<ws>
 const clients = new Map(); // ws → { user, roomId }
 const onlineUsers = new Map(); // userId → Set<ws>
+const userSockets = new Map(); // userId → ws (pour signaling WebRTC 1-to-1)
 
 const send = (ws, event, data) => {
   if (ws.readyState === 1) ws.send(JSON.stringify({ event, data }));
@@ -135,6 +136,62 @@ const handleSendMessage = async (ws, { roomId, content, type, attachment, epheme
   }
 };
 
+// ─── Utilitaires WebRTC ──────────────────────────────────────────────────────
+
+const sendToUser = (userId, event, data) => {
+  const ws = userSockets.get(String(userId));
+  if (ws) send(ws, event, data);
+};
+
+// ─── Handlers WebRTC (signaling) ─────────────────────────────────────────────
+
+// Appel entrant : l'appelant envoie son SDP offer + type d'appel
+const handleCallOffer = (ws, { targetUserId, sdp, callType }) => {
+  const state = clients.get(ws);
+  if (!state) return;
+  sendToUser(targetUserId, 'incoming_call', {
+    callerId: String(state.user._id),
+    callerName: state.user.username,
+    callerAvatar: state.user.avatar,
+    sdp,
+    callType, // 'audio' | 'video'
+  });
+};
+
+// L'appelé répond avec son SDP answer
+const handleCallAnswer = (ws, { targetUserId, sdp, accepted }) => {
+  const state = clients.get(ws);
+  if (!state) return;
+  sendToUser(targetUserId, 'call_answer', {
+    calleeId: String(state.user._id),
+    calleeName: state.user.username,
+    sdp,
+    accepted,
+  });
+};
+
+// Échange de candidats ICE (traversée NAT)
+const handleIceCandidate = (ws, { targetUserId, candidate }) => {
+  const state = clients.get(ws);
+  if (!state) return;
+  sendToUser(targetUserId, 'ice_candidate', {
+    fromUserId: String(state.user._id),
+    candidate,
+  });
+};
+
+// Fin / annulation d'appel
+const handleCallEnd = (ws, { targetUserId, reason }) => {
+  const state = clients.get(ws);
+  if (!state) return;
+  sendToUser(targetUserId, 'call_end', {
+    fromUserId: String(state.user._id),
+    reason: reason || 'hangup',
+  });
+};
+
+// ─── Handlers Chat ────────────────────────────────────────────────────────────
+
 const handleTyping = (ws, { roomId, isTyping }) => {
   const state = clients.get(ws);
   if (!state) return;
@@ -162,6 +219,8 @@ const initWsServer = (server) => {
       return; 
     }
 
+    console.log(`[WS] Connexion acceptée pour ${user.username}, tentative d'enregistrement...`);
+
     // Ajouter aux clients et online users
     clients.set(ws, { user, roomId: null });
     
@@ -170,8 +229,15 @@ const initWsServer = (server) => {
     }
     onlineUsers.get(user._id.toString()).add(ws);
     
-    // Mettre à jour le statut online dans la BDD
-    await updateUserOnlineStatus(user._id, true);
+    // Mettre à jour le statut online dans la BDD (protégé)
+    try {
+      await updateUserOnlineStatus(user._id, true);
+    } catch (err) {
+      console.error('[WS] Erreur update online status:', err.message);
+    }
+    
+    // Enregistrer pour le signaling WebRTC
+    userSockets.set(String(user._id), ws);
     
     // Envoyer les infos de connexion
     send(ws, 'authenticated', { 
@@ -183,31 +249,54 @@ const initWsServer = (server) => {
     
     console.log(`[WS] ${user.username} connecté (${onlineUsers.get(user._id.toString()).size} connexions)`);
 
+    // Handler unique (avec logs d'erreurs)
     ws.on('message', async (raw) => {
-      let payload;
-      try { 
-        payload = JSON.parse(raw); 
-      } catch { 
-        return; 
-      }
-      
-      const { event, data } = payload;
-      
-      if (event === 'join_room') {
-        await handleJoinRoom(ws, data);
-      }
-      else if (event === 'send_message') {
-        await handleSendMessage(ws, data);
-      }
-      else if (event === 'typing') {
-        handleTyping(ws, data);
-      }
-      else {
-        send(ws, 'error', { message: `Événement inconnu: ${event}` });
+      try {
+        let payload;
+        try {
+          payload = JSON.parse(raw);
+        } catch {
+          return;
+        }
+
+        const { event, data } = payload;
+        switch (event) {
+          // Chat
+          case 'join_room':      await handleJoinRoom(ws, data);     break;
+          case 'send_message':   await handleSendMessage(ws, data);  break;
+          case 'typing':         handleTyping(ws, data);             break;
+
+          // WebRTC signaling
+          case 'call_offer':     handleCallOffer(ws, data);          break;
+          case 'call_answer':    handleCallAnswer(ws, data);         break;
+          case 'ice_candidate':  handleIceCandidate(ws, data);       break;
+          case 'call_end':       handleCallEnd(ws, data);            break;
+
+          default:
+            send(ws, 'error', { message: `Événement inconnu: ${event}` });
+        }
+      } catch (err) {
+        console.error('[WS] Exception on message:', err?.stack || err?.message);
+        try { send(ws, 'error', { message: 'Erreur interne serveur' }); } catch {}
       }
     });
 
-    ws.on('close', async () => {
+
+
+    ws.on('close', async (code, reason) => {
+      try {
+        const state0 = clients.get(ws);
+        console.log('[WS] close event', {
+          code,
+          reason: reason || 'aucune',
+          user: state0?.user?.username,
+          userId: state0?.user?._id,
+          roomId: state0?.roomId,
+        });
+      } catch (e) {
+        console.error('[WS] close log failed:', e?.message);
+      }
+
       const state = clients.get(ws);
       
       if (state?.roomId) {
@@ -221,16 +310,28 @@ const initWsServer = (server) => {
       }
       
       // Retirer des online users
-      const userSockets = onlineUsers.get(state?.user?._id?.toString());
-      if (userSockets) {
-        userSockets.delete(ws);
-        if (userSockets.size === 0) {
+      const userConnections = onlineUsers.get(state?.user?._id?.toString());
+      if (userConnections) {
+        userConnections.delete(ws);
+        if (userConnections.size === 0) {
           onlineUsers.delete(state.user._id.toString());
-          await updateUserOnlineStatus(state.user._id, false);
+          try {
+            await updateUserOnlineStatus(state.user._id, false);
+          } catch (err) {
+            console.error('[WS] Erreur update offline status:', err.message);
+          }
         }
       }
       
       clients.delete(ws);
+
+      const userId = String(state?.user?._id);
+      if (userSockets.get(userId) === ws) {
+        const remaining = userConnections?.size ? [...userConnections][0] : null;
+        if (remaining) userSockets.set(userId, remaining);
+        else userSockets.delete(userId);
+      }
+
       console.log(`[WS] ${state?.user?.username || 'Unknown'} déconnecté`);
     });
 

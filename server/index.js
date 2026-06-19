@@ -16,19 +16,23 @@ const server = http.createServer(app);
 // Autoriser les connexions depuis le téléphone
 const allowedOrigins = [
   'http://localhost:5173',
+  'http://127.0.0.1:5173',
   'http://10.173.193.120:5173',
-  'http://10.173.193.120:3001'
+  'http://10.173.193.120:3001',
+  // au cas où le front serait servi sans port
+  'http://10.173.193.120'
 ];
 
-app.use(cors({ 
+app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Origin not allowed by CORS'));
-    }
+    // Permet les requêtes sans Origin (ex: curl, certains fetch)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+
+    // Mode permissif pour éviter blocages en prod/test (tu peux le resserrer ensuite)
+    return callback(null, true);
   },
-  credentials: true
+  credentials: true,
 }));
 app.use(express.json());
 

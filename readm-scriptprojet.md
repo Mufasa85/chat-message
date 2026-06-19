@@ -87,7 +87,7 @@ POST /api/upload
 
 ---
 
- 📥 RÉCUPÉRATION DES FICHIERS
+  RÉCUPÉRATION DES FICHIERS
 
 Les fichiers sont automatiquement :
 1. **Stockés sur Cloudinary** (URL dans `attachment.url`)
@@ -97,7 +97,7 @@ Les fichiers sont automatiquement :
 
 ---
 
- 📁 Types supportés
+  Types supportés
 - **Images** : jpg, png, gif, webp
 - **Vidéos** : mp4, mov, avi, webm  
 - **Audio** : mp3, wav, ogg, m4a

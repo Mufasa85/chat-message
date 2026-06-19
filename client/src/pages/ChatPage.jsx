@@ -4,6 +4,8 @@ import { useChat } from '../context/ChatContext';
 import { useFileUpload } from '../hooks/useFileUpload.jsx';
 import GiphyPicker from '../../components/GiphyPicker';
 import MessageBubble from '../../components/MessageBubble';
+import CallModal from '../../components/CallModal';
+import CallButton from '../../components/CallButton';
 
 // Construire les options de durée depuis l'environnement
 const durations = import.meta.env.VITE_EPHEMERAL_DURATIONS?.split(',').map(Number) || [10, 30, 60, 120, 300];
@@ -159,7 +161,7 @@ function MessageInput({ token }) {
 
 export default function ChatPage() {
   const { user, token, logout } = useAuth();
-  const { messages, currentRoom, onlineUsers, typingUsers, rooms, joinRoom, fetchRooms, createRoom } = useChat();
+  const { messages, currentRoom, onlineUsers, typingUsers, rooms, joinRoom, fetchRooms, createRoom, webrtc } = useChat();
   const [showCreate, setShowCreate] = useState(false);
   const [newRoomName, setNewRoomName] = useState('');
   const [newRoomDesc, setNewRoomDesc] = useState('');
@@ -428,20 +430,31 @@ export default function ChatPage() {
               En ligne — {onlineUsers.length}
             </h3>
             <div className="space-y-1">
-              {onlineUsers.map((u) => (
-                <div key={u._id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-[#35363c] cursor-pointer transition-colors">
-                  <div className="relative">
-                    <div 
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold"
-                      style={{ background: u.avatar || '#6366f1' }}
-                    >
-                      {u.username?.[0]?.toUpperCase()}
+              {onlineUsers.map((u) => {
+                const isSelf = String(u._id) === String(user?._id);
+                return (
+                  <div key={u._id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-[#35363c] cursor-pointer transition-colors">
+                    <div className="relative">
+                      <div 
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold"
+                        style={{ background: u.avatar || '#6366f1' }}
+                      >
+                        {u.username?.[0]?.toUpperCase()}
+                      </div>
+                      <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-[#1e1f22]"></div>
                     </div>
-                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-[#1e1f22]"></div>
+                    <span className="text-gray-300 text-sm truncate">{u.username}</span>
+                    {!isSelf && (
+                      <div className="ml-auto">
+                        <CallButton
+                          user={{ userId: u._id, username: u.username, avatar: u.avatar }}
+                          onCall={webrtc.startCall}
+                        />
+                      </div>
+                    )}
                   </div>
-                  <span className="text-gray-300 text-sm truncate">{u.username}</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -505,6 +518,23 @@ export default function ChatPage() {
           </div>
         </div>
       )}
+
+      {/* CallModal - WebRTC */}
+      <CallModal
+        callState={webrtc.callState}
+        callType={webrtc.callType}
+        remoteUser={webrtc.remoteUser}
+        currentUser={user}
+        isMuted={webrtc.isMuted}
+        isCamOff={webrtc.isCamOff}
+        localVideoRef={webrtc.localVideoRef}
+        remoteVideoRef={webrtc.remoteVideoRef}
+        onAccept={webrtc.acceptCall}
+        onReject={webrtc.rejectCall}
+        onHangUp={webrtc.hangUp}
+        onToggleMute={webrtc.toggleMute}
+        onToggleCamera={webrtc.toggleCamera}
+      />
     </div>
   );
 }

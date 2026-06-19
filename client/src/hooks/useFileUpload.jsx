@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
@@ -7,31 +7,6 @@ export const useFileUpload = ({ token, onUploaded, onMessageUploaded }) => {
   const [progress,  setProgress]  = useState(0);
   const [error,     setError]     = useState(null);
   const inputRef = useRef(null);
-  const wsRef = useRef(null);
-
-  // Créer une connexion WebSocket pour broadcaster les uploads
-  useEffect(() => {
-    if (!token) return;
-    
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.hostname}:3001/ws?token=${token}`;
-    
-    wsRef.current = new WebSocket(wsUrl);
-    
-    wsRef.current.onopen = () => {
-      console.log('[FileUpload WS] Connecté pour broadcaster les uploads');
-    };
-    
-    wsRef.current.onerror = (err) => {
-      console.error('[FileUpload WS] Erreur:', err);
-    };
-    
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
-    };
-  }, [token]);
 
   const openPicker = () => inputRef.current?.click();
 
@@ -50,17 +25,7 @@ export const useFileUpload = ({ token, onUploaded, onMessageUploaded }) => {
         xhr.setRequestHeader('Authorization', `Bearer ${token}`);
         xhr.send(fd);
       });
-      
-      // Broadcast via WebSocket pour les autres utilisateurs
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({
-          event: 'message_uploaded',
-          data: msg
-        }));
-        console.log('[FileUpload] Message broadcasté via WS:', msg.type, msg.attachment?.secureUrl);
-      }
-      
-      //Notifier le parent
+
       onUploaded?.(msg);
       onMessageUploaded?.(msg);
     } catch (e) { setError(e.message); }

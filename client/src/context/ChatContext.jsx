@@ -1,12 +1,13 @@
 import { createContext, useContext, useState, useCallback, useRef, useMemo } from 'react';
 import { useWebSocket } from '../hooks/useWebSocket';
+import { useWebRTC } from '../hooks/useWebRTC';
 import { useAuth } from './AuthContext';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 const ChatContext = createContext(null);
 
 export const ChatProvider = ({ children }) => {
-  const { token } = useAuth();
+  const { token, user: currentUser } = useAuth();
   const [rooms,       setRooms]       = useState([]);
   const [currentRoom, setCurrentRoom] = useState(null);
   const [messages,    setMessages]    = useState([]);
@@ -15,17 +16,56 @@ export const ChatProvider = ({ children }) => {
   const [connected,   setConnected]   = useState(false);
   const emitRef = useRef(null);
 
-  // Memoize callbacks to prevent WebSocket reconnection on every render
+  // ── WebRTC ─────────────────────────────────────────────────────────────────
+  const webrtc = useWebRTC({
+    currentUser,
+    emit: (...args) => emitRef.current?.(...args),
+  });
+  const webrtcRef = useRef(webrtc);
+  webrtcRef.current = webrtc;
+
+  // ── Routing WebSocket ──────────────────────────────────────────────────────
   const onMessage = useCallback(({ event, data }) => {
-    if (event === 'new_message') setMessages((prev) => [...prev, data]);
-    else if (event === 'room_users') setOnlineUsers(data.users);
-    else if (event === 'user_left')  setTypingUsers((prev) => prev.filter((u) => u.userId !== data.userId));
-    else if (event === 'typing') {
-      if (data.isTyping) setTypingUsers((prev) => prev.find((u) => u.userId === data.userId) ? prev : [...prev, { userId: data.userId, username: data.username }]);
-      else setTypingUsers((prev) => prev.filter((u) => u.userId !== data.userId));
+    switch (event) {
+      // Chat
+      case 'new_message':
+        setMessages((prev) => [...prev, data]);
+        break;
+      case 'room_users':
+        setOnlineUsers(data.users);
+        break;
+      case 'user_left':
+        setTypingUsers((prev) => prev.filter((u) => u.userId !== data.userId));
+        break;
+      case 'typing':
+        if (data.isTyping) {
+          setTypingUsers((prev) =>
+            prev.find((u) => u.userId === data.userId) ? prev
+              : [...prev, { userId: data.userId, username: data.username }]
+          );
+        } else {
+          setTypingUsers((prev) => prev.filter((u) => u.userId !== data.userId));
+        }
+        break;
+      // Gérer les messages uploadés (API REST)
+      case 'message_uploaded':
+        setMessages((prev) => [...prev, data]);
+        break;
+
+      // WebRTC signaling
+      case 'incoming_call':
+        webrtcRef.current.handleIncomingCall(data);
+        break;
+      case 'call_answer':
+        webrtcRef.current.handleCallAnswer(data);
+        break;
+      case 'ice_candidate':
+        webrtcRef.current.handleIceCandidate(data);
+        break;
+      case 'call_end':
+        webrtcRef.current.handleCallEnd(data);
+        break;
     }
-    // Gérer les messages uploadés (API REST)
-    else if (event === 'message_uploaded') setMessages((prev) => [...prev, data]);
   }, []);
 
   const onOpen = useCallback(() => {
@@ -102,8 +142,9 @@ export const ChatProvider = ({ children }) => {
 
   const value = useMemo(() => ({
     rooms, currentRoom, messages, onlineUsers, typingUsers, connected, 
-    fetchRooms, joinRoom, sendMessage, sendGiphy, sendTyping, createRoom, addMessage
-  }), [rooms, currentRoom, messages, onlineUsers, typingUsers, connected, fetchRooms, joinRoom, sendMessage, sendGiphy, sendTyping, createRoom, addMessage]);
+    fetchRooms, joinRoom, sendMessage, sendGiphy, sendTyping, createRoom, addMessage,
+    webrtc,
+  }), [rooms, currentRoom, messages, onlineUsers, typingUsers, connected, fetchRooms, joinRoom, sendMessage, sendGiphy, sendTyping, createRoom, addMessage, webrtc]);
 
   return (
     <ChatContext.Provider value={value}>
@@ -113,5 +154,3 @@ export const ChatProvider = ({ children }) => {
 };
 
 export const useChat = () => useContext(ChatContext);
-
-
