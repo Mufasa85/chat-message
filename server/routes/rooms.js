@@ -86,6 +86,51 @@ router.post('/:id/join', authMiddleware, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// PUT /api/rooms/:id - Modifier un salon
+router.put('/:id', authMiddleware, [
+  body('name').optional().trim().isLength({ min: 2, max: 50 }).withMessage('Nom: 2-50 caractères'),
+  body('description').optional().trim().isLength({ max: 200 }).withMessage('Description max 200 caractères'),
+], validate, async (req, res) => {
+  try {
+    const room = await Room.findById(req.params.id);
+    if (!room) return res.status(404).json({ error: 'Salon introuvable' });
+    
+    // Seul le créateur peut modifier
+    if (room.createdBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Seul le créateur peut modifier ce salon' });
+    }
+    
+    if (req.body.name) room.name = req.body.name;
+    if (req.body.description !== undefined) room.description = req.body.description;
+    
+    await room.save();
+    await room.populate('createdBy', 'username avatar');
+    await room.populate('members', 'username avatar');
+    res.json(room);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// DELETE /api/rooms/:id - Supprimer un salon et tous ses messages
+router.delete('/:id', authMiddleware, async (req, res) => {
+  try {
+    const room = await Room.findById(req.params.id);
+    if (!room) return res.status(404).json({ error: 'Salon introuvable' });
+    
+    // Seul le créateur peut supprimer
+    if (room.createdBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Seul le créateur peut supprimer ce salon' });
+    }
+    
+    // Supprimer tous les messages du salon
+    await Message.deleteMany({ room: req.params.id });
+    
+    // Supprimer le salon
+    await room.deleteOne();
+    
+    res.json({ message: 'Salon et messages supprimés' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // POST /api/rooms/:id/leave - Quitter un salon
 router.post('/:id/leave', authMiddleware, async (req, res) => {
   try {
@@ -119,15 +164,40 @@ router.get('/:id/messages', authMiddleware, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// PUT /api/rooms/:id/messages/:messageId - Modifier un message
+router.put('/:id/messages/:messageId', authMiddleware, [
+  body('content').trim().isLength({ min: 1, max: 2000 }).withMessage('Contenu: 1-2000 caractères'),
+], validate, async (req, res) => {
+  try {
+    const message = await Message.findById(req.params.messageId);
+    if (!message) return res.status(404).json({ error: 'Message introuvable' });
+    
+    // Vérifier que le salon correspond
+    if (message.room.toString() !== req.params.id) {
+      return res.status(400).json({ error: 'Message pas dans ce salon' });
+    }
+    
+    // Seul l'auteur peut modifier son message
+    if (message.author.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Seul l\'auteur peut modifier ce message' });
+    }
+    
+    message.content = req.body.content;
+    await message.save();
+    await message.populate('author', 'username avatar');
+    res.json(message);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // DELETE /api/rooms/:id/messages/:messageId - Supprimer un message
 router.delete('/:id/messages/:messageId', authMiddleware, async (req, res) => {
   try {
     const message = await Message.findById(req.params.messageId);
     if (!message) return res.status(404).json({ error: 'Message introuvable' });
     
-    // Seul l'auteur ou un admin peut supprimer
+    // Seul l'auteur peut supprimer son message
     if (message.author.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ error: 'Non autorisé' });
+      return res.status(403).json({ error: 'Seul l\'auteur peut supprimer ce message' });
     }
     
     await message.deleteOne();

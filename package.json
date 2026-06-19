@@ -1,4 +1,14 @@
 {
+  "name": "arcane-chat-app",
+  "version": "1.0.0",
+  "description": "ArcaneCore Messenger - Chat en Temps Réel avec Messages Éphémères",
+  "scripts": {
+    "setup": "bash setup.sh",
+    "ngrok-test": "bash setup-ngrok-test.sh",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "dev": "npm run dev:server & npm run dev:client"
+  },
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
