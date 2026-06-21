@@ -36,7 +36,7 @@ export default function CallModal({
   remoteUser, // { username, avatar }
   currentUser,
   isMuted, isCamOff,
-  localVideoRef, remoteVideoRef,
+  localVideoRef, remoteVideoRef, remoteAudioRef,
   onAccept, onReject, onHangUp,
   onToggleMute, onToggleCamera,
 }) {
@@ -56,6 +56,7 @@ export default function CallModal({
   if (callState === 'calling' || (callState === 'active' && callType === 'audio')) {
     return (
       <div style={s.overlay}>
+        <audio ref={remoteAudioRef} autoPlay playsInline style={{ display: 'none' }} />
         <div style={s.card}>
           <p style={s.subtitle}>{callState === 'calling' ? 'Appel en cours...' : '🎙 Appel audio actif'}</p>
           {avatar(remoteUser?.username, remoteUser?.avatar, 80)}

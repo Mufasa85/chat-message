@@ -35,7 +35,7 @@ export const ChatProvider = ({ children }) => {
   const onMessage = useCallback(({ event, data }) => {
     switch (event) {
       // Chat
-      case 'new_message':
+      case 'new_message': {
         setMessages((prev) => [...prev, data]);
         // Normaliser les IDs en strings pour éviter les problèmes de type
         const messageRoomId = String(data.room);
@@ -59,6 +59,7 @@ export const ChatProvider = ({ children }) => {
         }
         // If message is in current room, no need to update unread counts
         break;
+      }
       case 'room_users':
         setOnlineUsers(data.users);
         break;
@@ -249,11 +250,12 @@ export const ChatProvider = ({ children }) => {
     fetchRooms, joinRoom, sendMessage, sendGiphy, sendTyping, createRoom, addMessage,
     updateRoom, deleteRoom, deleteMessage, updateMessage,
     markRoomAsRead, getTotalUnread,
-    webrtc,
-  }), [rooms, currentRoom, messages, onlineUsers, typingUsers, connected, unreadCounts, fetchRooms, joinRoom, sendMessage, sendGiphy, sendTyping, createRoom, addMessage, updateRoom, deleteRoom, deleteMessage, updateMessage, markRoomAsRead, getTotalUnread, webrtc]);
+  }), [rooms, currentRoom, messages, onlineUsers, typingUsers, connected, unreadCounts, fetchRooms, joinRoom, sendMessage, sendGiphy, sendTyping, createRoom, addMessage, updateRoom, deleteRoom, deleteMessage, updateMessage, markRoomAsRead, getTotalUnread]);
+
+  const contextValue = useMemo(() => ({ ...value, webrtc }), [value, webrtc]);
 
   return (
-    <ChatContext.Provider value={value}>
+    <ChatContext.Provider value={contextValue}>
       {children}
     </ChatContext.Provider>
   );

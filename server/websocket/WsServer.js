@@ -149,6 +149,8 @@ const sendToUser = (userId, event, data) => {
 const handleCallOffer = (ws, { targetUserId, sdp, callType }) => {
   const state = clients.get(ws);
   if (!state) return;
+  const targetWs = userSockets.get(String(targetUserId));
+  console.log(`[WS] call_offer de ${state.user.username} → target: ${targetUserId} | trouvé: ${!!targetWs} | userSockets keys: [${[...userSockets.keys()].join(', ')}]`);
   sendToUser(targetUserId, 'incoming_call', {
     callerId: String(state.user._id),
     callerName: state.user.username,
