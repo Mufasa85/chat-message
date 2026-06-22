@@ -1,5 +1,7 @@
 require('dotenv').config();
+const https = require('https');
 const http = require('http');
+const fs = require('fs');
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -11,16 +13,23 @@ const { initWsServer } = require('./websocket/WsServer');
 const cleanupService = require('./services/cleanupExpiredMessages');
 
 const app = express();
-const server = http.createServer(app);
+
+const useHttps = process.env.USE_HTTPS === 'true';
+const server = useHttps
+  ? require('https').createServer({
+      key:  fs.readFileSync('./10.173.193.120+2-key.pem'),
+      cert: fs.readFileSync('./10.173.193.120+2.pem'),
+    }, app)
+  : http.createServer(app);
 
 // Autoriser les connexions depuis le téléphone
 const allowedOrigins = [
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://10.173.193.120:5173',
-  'http://10.173.193.120:3001',
+  'https://localhost:5173',
+  'https://127.0.0.1:5173',
+  'https://10.173.193.120:5173',
+  'https://10.173.193.120:3001',
   // au cas où le front serait servi sans port
-  'http://10.173.193.120'
+  'https://10.173.193.120'
 ];
 
 app.use(cors({

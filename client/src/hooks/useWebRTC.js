@@ -36,9 +36,10 @@ export const useWebRTC = ({ currentUser, emit }) => {
   const targetUserIdRef     = useRef(null);   // userId de l'interlocuteur
   const pendingCallRef      = useRef(null);   // données de l'appel entrant en attente
 
-  const localVideoRef  = useRef(null);
-  const remoteVideoRef = useRef(null);
-  const remoteAudioRef = useRef(null);
+  const localVideoRef    = useRef(null);
+  const remoteVideoRef   = useRef(null);
+  const remoteAudioRef   = useRef(null);
+  const remoteStreamRef  = useRef(null);
 
   // ── Utilitaires privés ────────────────────────────────────────────────────
 
@@ -63,12 +64,14 @@ export const useWebRTC = ({ currentUser, emit }) => {
   }, []);
 
   const attachRemoteStream = useCallback((stream) => {
+    remoteStreamRef.current = stream;
     if (remoteVideoRef.current) {
       remoteVideoRef.current.srcObject = stream;
     }
     if (remoteAudioRef.current) {
       remoteAudioRef.current.srcObject = stream;
     }
+    console.log('[WebRTC] attachRemoteStream: video=', !!remoteVideoRef.current, 'audio=', !!remoteAudioRef.current);
   }, []);
 
   const createPeerConnection = useCallback((targetId) => {
@@ -106,6 +109,8 @@ export const useWebRTC = ({ currentUser, emit }) => {
     }
     if (localVideoRef.current)  localVideoRef.current.srcObject  = null;
     if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
+    if (remoteAudioRef.current) remoteAudioRef.current.srcObject = null;
+    remoteStreamRef.current  = null;
     pendingCandidatesRef.current = [];
     targetUserIdRef.current = null;
     pendingCallRef.current  = null;
@@ -291,6 +296,7 @@ export const useWebRTC = ({ currentUser, emit }) => {
     localVideoRef,
     remoteVideoRef,
     remoteAudioRef,
+    remoteStreamRef,
     // Actions utilisateur
     startCall,
     acceptCall,

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 
 // ─── Sonnerie entrante ────────────────────────────────────────────────────────
 function useRingtone(active) {
@@ -37,10 +37,23 @@ export default function CallModal({
   currentUser,
   isMuted, isCamOff,
   localVideoRef, remoteVideoRef, remoteAudioRef,
+  remoteStream,
   onAccept, onReject, onHangUp,
   onToggleMute, onToggleCamera,
 }) {
   useRingtone(callState === 'incoming');
+
+  useEffect(() => {
+    if (!remoteStream) return;
+    if (remoteAudioRef?.current) {
+      remoteAudioRef.current.srcObject = remoteStream;
+      console.log('[CallModal] remoteAudioRef ré-attaché');
+    }
+    if (remoteVideoRef?.current) {
+      remoteVideoRef.current.srcObject = remoteStream;
+      console.log('[CallModal] remoteVideoRef ré-attaché');
+    }
+  }, [callState, remoteStream]);
 
   if (!callState || callState === 'idle') return null;
 

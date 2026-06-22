@@ -772,6 +772,7 @@ export default function ChatPage() {
         localVideoRef={webrtc.localVideoRef}
         remoteVideoRef={webrtc.remoteVideoRef}
         remoteAudioRef={webrtc.remoteAudioRef}
+        remoteStream={webrtc.remoteStreamRef?.current}
         onAccept={webrtc.acceptCall}
         onReject={webrtc.rejectCall}
         onHangUp={webrtc.hangUp}
