@@ -1,24 +1,19 @@
 import { useState, useRef, useCallback } from 'react';
 
+const TURN_URL      = import.meta.env.VITE_TURN_URL;
+const TURN_USERNAME = import.meta.env.VITE_TURN_USERNAME;
+const TURN_PASSWORD = import.meta.env.VITE_TURN_PASSWORD;
+
 export const ICE_SERVERS = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
-    {
-      urls: 'turn:openrelay.metered.ca:80',
-      username: 'openrelayproject',
-      credential: 'openrelayproject',
-    },
-    {
-      urls: 'turn:openrelay.metered.ca:443',
-      username: 'openrelayproject',
-      credential: 'openrelayproject',
-    },
-    {
-      urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-      username: 'openrelayproject',
-      credential: 'openrelayproject',
-    },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    ...(TURN_URL ? [
+      { urls: `turn:${TURN_URL}`,               username: TURN_USERNAME, credential: TURN_PASSWORD },
+      { urls: `turn:${TURN_URL}?transport=tcp`, username: TURN_USERNAME, credential: TURN_PASSWORD },
+      { urls: `turns:${TURN_URL}?transport=tcp`,username: TURN_USERNAME, credential: TURN_PASSWORD },
+    ] : []),
   ],
 };
 
