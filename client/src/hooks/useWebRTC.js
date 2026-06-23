@@ -54,22 +54,24 @@ export const useWebRTC = ({ currentUser, emit }) => {
   }, []);
 
   const attachLocalVideo = useCallback((stream) => {
+    console.log('[DEBUG] attachLocalVideo, stream=', stream, 'instanceof MediaStream:', stream instanceof MediaStream, 'localVideoRef.current=', localVideoRef.current);
     if (localVideoRef.current) {
       localVideoRef.current.srcObject = stream;
     }
   }, []);
 
-  const attachRemoteStream = useCallback((stream) => {
-      remoteStreamRef.current = stream;
-      setRemoteStream(stream);
-      if (remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = stream;
-      }
-      if (remoteAudioRef.current) {
-        remoteAudioRef.current.srcObject = stream;
-      }
-      console.log('[WebRTC] attachRemoteStream: video=', !!remoteVideoRef.current, 'audio=', !!remoteAudioRef.current);
-    }, []);
+const attachRemoteStream = useCallback((stream) => {
+  console.log('[DEBUG] attachRemoteStream, stream=', stream, 'instanceof MediaStream:', stream instanceof MediaStream);
+  remoteStreamRef.current = stream;
+  setRemoteStream(stream);
+  if (remoteVideoRef.current) {
+    remoteVideoRef.current.srcObject = stream;
+  }
+  if (remoteAudioRef.current) {
+    remoteAudioRef.current.srcObject = stream;
+  }
+  console.log('[WebRTC] attachRemoteStream: video=', !!remoteVideoRef.current, 'audio=', !!remoteAudioRef.current);
+}, []);
 
   const createPeerConnection = useCallback((targetId) => {
     const pc = new RTCPeerConnection(ICE_SERVERS);

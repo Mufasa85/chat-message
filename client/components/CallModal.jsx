@@ -43,17 +43,18 @@ export default function CallModal({
 }) {
   useRingtone(callState === 'incoming');
 
-  useEffect(() => {
-    if (!remoteStream) return;
-    if (remoteAudioRef?.current) {
-      remoteAudioRef.current.srcObject = remoteStream;
-      console.log('[CallModal] remoteAudioRef ré-attaché');
-    }
-    if (remoteVideoRef?.current) {
-      remoteVideoRef.current.srcObject = remoteStream;
-      console.log('[CallModal] remoteVideoRef ré-attaché');
-    }
-  }, [callState, remoteStream]);
+useEffect(() => {
+  console.log('[DEBUG CallModal] effect, remoteStream=', remoteStream, 'instanceof MediaStream:', remoteStream instanceof MediaStream);
+  if (!remoteStream) return;
+  if (remoteAudioRef?.current) {
+    remoteAudioRef.current.srcObject = remoteStream;
+    console.log('[CallModal] remoteAudioRef ré-attaché');
+  }
+  if (remoteVideoRef?.current) {
+    remoteVideoRef.current.srcObject = remoteStream;
+    console.log('[CallModal] remoteVideoRef ré-attaché');
+  }
+}, [callState, remoteStream]);
 
   if (!callState || callState === 'idle') return null;
 
