@@ -24,6 +24,7 @@ export const useWebRTC = ({ currentUser, emit }) => {
   const [remoteUser, setRemoteUser] = useState(null);   // { username, avatar }
   const [isMuted,   setIsMuted]     = useState(false);
   const [isCamOff,  setIsCamOff]    = useState(false);
+  const [remoteStream, setRemoteStream] = useState(null);
 
   const peerConnectionRef   = useRef(null);
   const localStreamRef      = useRef(null);
@@ -59,15 +60,16 @@ export const useWebRTC = ({ currentUser, emit }) => {
   }, []);
 
   const attachRemoteStream = useCallback((stream) => {
-    remoteStreamRef.current = stream;
-    if (remoteVideoRef.current) {
-      remoteVideoRef.current.srcObject = stream;
-    }
-    if (remoteAudioRef.current) {
-      remoteAudioRef.current.srcObject = stream;
-    }
-    console.log('[WebRTC] attachRemoteStream: video=', !!remoteVideoRef.current, 'audio=', !!remoteAudioRef.current);
-  }, []);
+      remoteStreamRef.current = stream;
+      setRemoteStream(stream);
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = stream;
+      }
+      if (remoteAudioRef.current) {
+        remoteAudioRef.current.srcObject = stream;
+      }
+      console.log('[WebRTC] attachRemoteStream: video=', !!remoteVideoRef.current, 'audio=', !!remoteAudioRef.current);
+    }, []);
 
   const createPeerConnection = useCallback((targetId) => {
     const pc = new RTCPeerConnection(ICE_SERVERS);
@@ -106,6 +108,7 @@ export const useWebRTC = ({ currentUser, emit }) => {
     if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
     if (remoteAudioRef.current) remoteAudioRef.current.srcObject = null;
     remoteStreamRef.current  = null;
+    setRemoteStream(null);
     pendingCandidatesRef.current = [];
     targetUserIdRef.current = null;
     pendingCallRef.current  = null;
@@ -287,6 +290,7 @@ export const useWebRTC = ({ currentUser, emit }) => {
     remoteUser,
     isMuted,
     isCamOff,
+    remoteStream,
     // Refs médias
     localVideoRef,
     remoteVideoRef,
