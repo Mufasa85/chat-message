@@ -110,6 +110,7 @@ const attachRemoteStream = useCallback((stream) => {
     if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
     if (remoteAudioRef.current) remoteAudioRef.current.srcObject = null;
     remoteStreamRef.current  = null;
+    
     setRemoteStream(null);
     pendingCandidatesRef.current = [];
     targetUserIdRef.current = null;
