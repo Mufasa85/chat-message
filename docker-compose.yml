@@ -1,5 +1,34 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# Docker Compose — Chat App (React + Node.js + MongoDB)
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# Services :
+#   - mongo  : base de données MongoDB
+#   - server : backend Node.js (port 3001)
+#   - client : frontend React servi par Nginx (port 80)
+#
+# Usage :
+#   docker compose build
+#   docker compose up -d
+#
+# Puis accéder à : http://localhost
+# API backend      : http://localhost:3001
+# ═══════════════════════════════════════════════════════════════════════════
+
 services:
-  # ── Backend Node.js ──────────────────────────────────────────────
+  # ── MongoDB ────────────────────────────────────────────────────────────────
+  mongo:
+    image: mongo:7
+    container_name: chat_mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - chat_network
+
+  # ── Backend Node.js ────────────────────────────────────────────────────────
   server:
     build:
       context: ./server
@@ -11,8 +40,12 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3001
+      # En Docker, le serveur se connecte à MongoDB via le nom du service
+      - MONGO_URI=mongodb://mongo:27017/chatapp
     env_file:
-      - ./server/.env
+      - ./server/.env.docker
+    depends_on:
+      - mongo
     networks:
       - chat_network
     healthcheck:
@@ -20,6 +53,27 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+
+  # ── Frontend React + Nginx ─────────────────────────────────────────────────
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        # Le navigateur appelle le serveur via localhost:3001
+        VITE_API_URL: http://localhost:3001/api
+        VITE_WS_URL: ws://localhost:3001/ws
+    container_name: chat_client
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+    networks:
+      - chat_network
+
+volumes:
+  mongo_data:
 
 networks:
   chat_network:
