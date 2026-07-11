@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
+const Message = require('../models/Message');
 const { authMiddleware } = require('../middleware/auth');
 const { checkRole } = require('../middleware/checkRole');
 
@@ -43,6 +44,24 @@ router.delete('/users/:id', async (req, res) => {
     res.json({ message: 'Utilisateur supprimé', userId: req.params.id });
   } catch (err) {
     res.status(500).json({ error: 'Erreur lors de la suppression' });
+  }
+});
+
+// GET /api/admin/stats — statistiques globales
+router.get('/stats', async (req, res) => {
+  try {
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const [totalUsers, onlineUsers, totalMessages, messagesToday, adminCount] = await Promise.all([
+      User.countDocuments(),
+      User.countDocuments({ isOnline: true }),
+      Message.countDocuments(),
+      Message.countDocuments({ createdAt: { $gte: startOfDay } }),
+      User.countDocuments({ role: 'admin' }),
+    ]);
+    res.json({ totalUsers, onlineUsers, totalMessages, messagesToday, adminCount, generatedAt: now.toISOString() });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

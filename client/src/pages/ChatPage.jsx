@@ -7,6 +7,7 @@ import MessageBubble from '../../components/MessageBubble';
 import CallModal from '../../components/CallModal';
 import CallButton from '../../components/CallButton';
 import VoiceRecorder from '../components/VoiceRecorder';
+import ProfilePage from './ProfilePage';
 
 // Construire les options de durée depuis l'environnement
 const durations = import.meta.env.VITE_EPHEMERAL_DURATIONS?.split(',').map(Number) || [10, 30, 60, 120, 300];
@@ -277,6 +278,7 @@ export default function ChatPage() {
   const [editRoomName, setEditRoomName] = useState('');
   const [editRoomDesc, setEditRoomDesc] = useState('');
   const [replyTo, setReplyTo] = useState(null);
+  const [showProfile, setShowProfile] = useState(false);
   const bottomRef = useRef(null);
 
   useEffect(() => { fetchRooms(); }, [fetchRooms]);
@@ -462,10 +464,10 @@ export default function ChatPage() {
             >
               {user?.username?.[0]?.toUpperCase()}
             </div>
-            <div className="flex-1 min-w-0">
+            <button onClick={() => setShowProfile(true)} className="flex-1 min-w-0 text-left hover:opacity-80 transition-opacity">
               <p className="text-white text-xs font-medium truncate">{user?.username}</p>
               <p className="text-gray-400 text-[10px]">En ligne</p>
-            </div>
+            </button>
             <button onClick={logout} className="text-gray-400 hover:text-white p-0.5">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -787,6 +789,9 @@ export default function ChatPage() {
           </div>
         </div>
       )}
+
+      {/* Page Profil */}
+      {showProfile && <ProfilePage onBack={() => setShowProfile(false)} />}
 
       {/* Toasts de notification */}
       {toasts.length > 0 && (

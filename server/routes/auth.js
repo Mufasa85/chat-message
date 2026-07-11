@@ -84,4 +84,21 @@ router.get('/users', authMiddleware, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// PUT /api/auth/change-password
+router.put('/change-password', authMiddleware, [
+  body('currentPassword').notEmpty().withMessage('Mot de passe actuel requis'),
+  body('newPassword').isLength({ min: 6 }).withMessage('Nouveau mot de passe : 6 caractères minimum'),
+], validate, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const isValid = await req.user.comparePassword(currentPassword);
+    if (!isValid) return res.status(401).json({ error: 'Mot de passe actuel incorrect' });
+    req.user.password = newPassword;
+    await req.user.save();
+    res.json({ message: 'Mot de passe mis à jour avec succès' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
