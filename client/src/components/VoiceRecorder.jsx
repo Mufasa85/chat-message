@@ -127,8 +127,8 @@ export default function VoiceRecorder({ roomId, token, onSent, apiUrl }) {
   });
 
   const overlay = {
-    position: 'absolute', bottom: '100%', left: 0, right: 0,
-    marginBottom: 6, zIndex: 40,
+    position: 'fixed', bottom: 80, left: 8, right: 8,
+    zIndex: 200,
     background: '#1e2027',
     border: '1px solid rgba(99,102,241,0.35)',
     borderRadius: 12,

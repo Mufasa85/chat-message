@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { SmilePlus } from 'lucide-react';
 
 /**
@@ -27,6 +27,8 @@ const normalizeReactions = (raw = {}) =>
 
 export default function MessageReactions({ messageId, reactions = {}, currentUser, emit, isOwn }) {
   const [showPicker, setShowPicker] = useState(false);
+  const [pickerPos, setPickerPos] = useState({ top: 0, left: 0 });
+  const addBtnRef = useRef(null);
 
   const normalized = normalizeReactions(reactions);
 
@@ -40,6 +42,24 @@ export default function MessageReactions({ messageId, reactions = {}, currentUse
   };
 
   const reactionEntries = Object.entries(normalized).filter(([, users]) => users.length > 0);
+
+  const openPicker = () => {
+    if (addBtnRef.current) {
+      const r = addBtnRef.current.getBoundingClientRect();
+      setPickerPos({
+        top: r.top - 8,
+        left: isOwn ? r.right - 4 : r.left,
+      });
+    }
+    setShowPicker(!showPicker);
+  };
+
+  useEffect(() => {
+    if (!showPicker) return;
+    const close = () => setShowPicker(false);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [showPicker]);
 
   const st = {
     container: { position: 'relative', marginTop: 4 },
@@ -60,12 +80,12 @@ export default function MessageReactions({ messageId, reactions = {}, currentUse
       color: '#9ca3af', transition: 'background .15s',
     },
     picker: {
-      position: 'absolute', bottom: '100%',
-      ...(isOwn ? { right: 0 } : { left: 0 }),
-      marginBottom: 6, background: '#313338',
+      position: 'fixed',
+      background: '#313338',
       borderRadius: 12, padding: '8px 10px',
       display: 'flex', gap: 6, boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
-      border: '1px solid rgba(255,255,255,0.1)', zIndex: 50,
+      border: '1px solid rgba(255,255,255,0.1)', zIndex: 200,
+      transform: 'translateY(-110%)',
     },
     emojiBtn: (reacted) => ({
       fontSize: '1.3rem', cursor: 'pointer', border: 'none',
@@ -91,7 +111,8 @@ export default function MessageReactions({ messageId, reactions = {}, currentUse
         ))}
 
         <button
-          onClick={() => setShowPicker(!showPicker)}
+          ref={addBtnRef}
+          onClick={(e) => { e.stopPropagation(); openPicker(); }}
           style={st.addBtn}
           title="Ajouter une réaction"
         >
@@ -99,7 +120,16 @@ export default function MessageReactions({ messageId, reactions = {}, currentUse
         </button>
 
         {showPicker && (
-          <div style={st.picker}>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              ...st.picker,
+              top: pickerPos.top,
+              left: isOwn ? 'auto' : pickerPos.left,
+              right: isOwn ? window.innerWidth - pickerPos.left : 'auto',
+              transform: 'translateY(-100%)',
+            }}
+          >
             {AVAILABLE_EMOJIS.map((emoji) => (
               <button
                 key={emoji}
