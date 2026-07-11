@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { PhoneOff, Mic, MicOff, Video, VideoOff, Phone, PhoneMissed, LayoutGrid, Maximize2 } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { PhoneOff, Mic, MicOff, Video, VideoOff, Phone, PhoneMissed } from 'lucide-react';
 
 // ─── Sonnerie entrante ────────────────────────────────────────────────────────
 function useRingtone(active) {
@@ -37,27 +37,28 @@ export default function CallModal({
   remoteUser, // { username, avatar }
   currentUser,
   isMuted, isCamOff,
-  localVideoRef, remoteVideoRef, remoteAudioRef,
+  localVideoRef, localStreamRef, remoteVideoRef, remoteAudioRef,
   remoteStream,
   peerConnection,
   onAccept, onReject, onHangUp,
   onToggleMute, onToggleCamera,
 }) {
   useRingtone(callState === 'incoming');
-  const [mosaic, setMosaic] = useState(false);
 
-useEffect(() => {
-  console.log('[DEBUG CallModal] effect, remoteStream=', remoteStream, 'instanceof MediaStream:', remoteStream instanceof MediaStream);
-  if (!remoteStream) return;
-  if (remoteAudioRef?.current) {
-    remoteAudioRef.current.srcObject = remoteStream;
-    console.log('[CallModal] remoteAudioRef ré-attaché');
-  }
-  if (remoteVideoRef?.current) {
-    remoteVideoRef.current.srcObject = remoteStream;
-    console.log('[CallModal] remoteVideoRef ré-attaché');
-  }
-}, [callState, remoteStream]);
+  useEffect(() => {
+    if (!remoteStream) return;
+    if (remoteAudioRef?.current) remoteAudioRef.current.srcObject = remoteStream;
+    if (remoteVideoRef?.current) remoteVideoRef.current.srcObject = remoteStream;
+  }, [callState, remoteStream]);
+
+  useEffect(() => {
+    if (callState !== 'active' || callType !== 'video') return;
+    if (!localVideoRef?.current) return;
+    const stream = localStreamRef?.current;
+    if (stream) {
+      localVideoRef.current.srcObject = stream;
+    }
+  }, [callState, callType]);
 
   if (!callState || callState === 'idle') return null;
 
@@ -110,33 +111,19 @@ useEffect(() => {
   if (callState === 'active' && callType === 'video') {
     return (
       <div style={s.videoOverlay}>
+        {/* Vidéo distante — plein écran */}
+        <video ref={remoteVideoRef} autoPlay playsInline style={s.remoteVideo} />
 
-        {mosaic ? (
-          /* ── Vue mosaïque : 50 / 50 ── */
-          <div style={s.mosaicRow}>
-            <div style={s.mosaicCell}>
-              <video ref={remoteVideoRef} autoPlay playsInline style={s.mosaicVideo} />
-              <div style={s.mosaicLabel}>{remoteUser?.username}</div>
-            </div>
-            <div style={s.mosaicCell}>
-              <video ref={localVideoRef} autoPlay playsInline muted style={s.mosaicVideo} />
-              <div style={s.mosaicLabel}>Moi</div>
-            </div>
-          </div>
-        ) : (
-          /* ── Vue spotlight : remote grand + local miniature ── */
-          <>
-            <video ref={remoteVideoRef} autoPlay playsInline style={s.remoteVideo} />
-            <video ref={localVideoRef} autoPlay playsInline muted style={s.localVideo} />
-            <div style={s.remoteName}>{remoteUser?.username}</div>
-          </>
-        )}
+        {/* Miniature locale — coin bas-droite */}
+        <video ref={localVideoRef} autoPlay playsInline muted style={s.localVideo} />
+
+        {/* Nom du pair */}
+        <div style={s.remoteName}>{remoteUser?.username}</div>
 
         {/* Contrôles */}
         <div style={s.videoControls}>
-          <Btn icon={isMuted   ? <MicOff size={20}/>   : <Mic size={20}/>}   label={isMuted   ? 'Micro off' : 'Micro'}   onClick={onToggleMute}   active={isMuted}   small />
-          <Btn icon={isCamOff  ? <VideoOff size={20}/> : <Video size={20}/>}  label={isCamOff  ? 'Cam off'  : 'Caméra'}  onClick={onToggleCamera} active={isCamOff}  small />
-          <Btn icon={mosaic    ? <Maximize2 size={20}/> : <LayoutGrid size={20}/>} label={mosaic ? 'Spotlight' : 'Mosaïque'} onClick={() => setMosaic(!mosaic)} active={mosaic} small />
+          <Btn icon={isMuted  ? <MicOff size={20}/>   : <Mic size={20}/>}  label={isMuted  ? 'Micro off' : 'Micro'}  onClick={onToggleMute}  active={isMuted}  small />
+          <Btn icon={isCamOff ? <VideoOff size={20}/> : <Video size={20}/>} label={isCamOff ? 'Cam off'  : 'Caméra'} onClick={onToggleCamera} active={isCamOff} small />
           <Btn icon={<PhoneOff size={20}/>} label="Raccrocher" onClick={onHangUp} danger small />
         </div>
       </div>
@@ -175,8 +162,4 @@ const s = {
   localVideo:   { position: 'absolute', bottom: 100, right: 16, width: 140, height: 100, borderRadius: 12, objectFit: 'cover', border: '2px solid #6366f1', boxShadow: '0 4px 16px rgba(0,0,0,0.6)' },
   remoteName:   { position: 'absolute', top: 16, left: 16, color: '#fff', fontWeight: 700, fontSize: '0.95rem', background: 'rgba(0,0,0,0.5)', padding: '4px 12px', borderRadius: 8, backdropFilter: 'blur(4px)' },
   videoControls:{ position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 10 },
-  mosaicRow:    { display: 'flex', width: '100%', height: '100%' },
-  mosaicCell:   { flex: 1, position: 'relative', overflow: 'hidden', borderRight: '1px solid #333' },
-  mosaicVideo:  { width: '100%', height: '100%', objectFit: 'cover', display: 'block' },
-  mosaicLabel:  { position: 'absolute', bottom: 80, left: '50%', transform: 'translateX(-50%)', color: '#fff', fontWeight: 700, fontSize: '0.9rem', background: 'rgba(0,0,0,0.5)', padding: '4px 14px', borderRadius: 8, backdropFilter: 'blur(4px)', whiteSpace: 'nowrap' },
 };

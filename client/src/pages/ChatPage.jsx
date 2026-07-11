@@ -784,6 +784,7 @@ export default function ChatPage() {
         isMuted={webrtc.isMuted}
         isCamOff={webrtc.isCamOff}
         localVideoRef={webrtc.localVideoRef}
+        localStreamRef={webrtc.localStreamRef}
         remoteVideoRef={webrtc.remoteVideoRef}
         remoteAudioRef={webrtc.remoteAudioRef}
         remoteStream={webrtc.remoteStream}
