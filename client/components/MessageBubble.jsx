@@ -143,9 +143,16 @@ export default function MessageBubble({ msg, isOwn }) {
     );
     if (msg.type === 'video') return <video src={att?.secureUrl||att?.url} controls style={s.video} />;
     if (msg.type === 'audio') return (
-      <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-        <span style={{ fontSize:'1.8rem' }}>🎵</span>
-        <div><p style={s.fname}>{att?.filename}</p><audio src={att?.secureUrl||att?.url} controls style={{ width:220, marginTop:4 }} /></div>
+      <div style={{ display:'flex', alignItems:'center', gap:10, minWidth:220 }}>
+        <div style={{ width:36, height:36, borderRadius:'50%', background:'rgba(99,102,241,0.25)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
+          </svg>
+        </div>
+        <div style={{ flex:1 }}>
+          <p style={{ color:'#c4b5fd', fontSize:'0.78rem', fontWeight:600, margin:'0 0 4px' }}>Message vocal</p>
+          <audio src={att?.secureUrl||att?.url} controls style={{ width:'100%', maxWidth:200, height:28 }} />
+        </div>
       </div>
     );
     if (msg.type === 'file') return (

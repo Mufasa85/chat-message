@@ -17,10 +17,20 @@ import { SmilePlus } from 'lucide-react';
 
 const AVAILABLE_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
 
+const normalizeReactions = (raw = {}) =>
+  Object.fromEntries(
+    Object.entries(raw).map(([emoji, users]) => [
+      emoji,
+      Array.isArray(users) ? users : Object.values(users ?? {}),
+    ])
+  );
+
 export default function MessageReactions({ messageId, reactions = {}, currentUser, emit, isOwn }) {
   const [showPicker, setShowPicker] = useState(false);
 
-  const hasReacted = (emoji) => reactions[emoji]?.includes(currentUser?._id);
+  const normalized = normalizeReactions(reactions);
+
+  const hasReacted = (emoji) => normalized[emoji]?.includes(currentUser?._id);
 
   const toggleReaction = (emoji) => {
     if (!currentUser || !emit) return;
@@ -29,7 +39,7 @@ export default function MessageReactions({ messageId, reactions = {}, currentUse
     setShowPicker(false);
   };
 
-  const reactionEntries = Object.entries(reactions).filter(([, users]) => users.length > 0);
+  const reactionEntries = Object.entries(normalized).filter(([, users]) => users.length > 0);
 
   const st = {
     container: { position: 'relative', marginTop: 4 },

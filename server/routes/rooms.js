@@ -159,8 +159,18 @@ router.get('/:id/messages', authMiddleware, async (req, res) => {
       .populate('author', 'username avatar')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
-      .limit(Number(limit));
-    res.json(messages.reverse());
+      .limit(Number(limit))
+      .lean();
+    const normalized = messages.reverse().map((m) => ({
+      ...m,
+      reactions: m.reactions ? Object.fromEntries(
+        Object.entries(m.reactions).map(([emoji, users]) => [
+          emoji,
+          Array.isArray(users) ? users : Object.values(users),
+        ])
+      ) : {},
+    }));
+    res.json(normalized);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
