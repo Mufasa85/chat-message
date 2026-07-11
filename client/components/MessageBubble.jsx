@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useChat } from '../src/context/ChatContext';
+import { useAuth } from '../src/context/AuthContext';
+import MessageReactions from '../src/components/MessageReactions';
 
 const formatBytes = (b) => {
   if (!b) return '';
@@ -10,7 +12,8 @@ const formatBytes = (b) => {
 const fileIcon = (f) => ({ pdf:'📄',doc:'📝',docx:'📝',xls:'📊',xlsx:'📊',zip:'📦',txt:'🗒️',mp3:'🎵',wav:'🎵',mp4:'🎬',mov:'🎬' }[f?.toLowerCase()] || '📎');
 
 export default function MessageBubble({ msg, isOwn }) {
-  const { currentRoom, updateMessage, deleteMessage } = useChat();
+  const { currentRoom, updateMessage, deleteMessage, emit } = useChat();
+  const { user: currentUser } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(msg.content);
@@ -187,6 +190,13 @@ export default function MessageBubble({ msg, isOwn }) {
           )}
         </div>
         <div style={{ ...s.bubble, ...(isOwn?s.own:s.other), ...(isMedia?s.media:{}) }}>{content()}</div>
+        <MessageReactions
+          messageId={msg._id}
+          reactions={msg.reactions || {}}
+          currentUser={currentUser}
+          emit={emit}
+          isOwn={isOwn}
+        />
         <p style={{ ...s.time, textAlign: isOwn?'right':'left' }}>
           {new Date(msg.createdAt).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}
           {msg.createdAt !== msg.updatedAt && <span style={{ marginLeft:4, fontStyle:'italic' }}></span>}

@@ -1,4 +1,6 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
+import { PhoneOff, Mic, MicOff, Video, VideoOff, Phone, PhoneMissed, Monitor, MonitorOff } from 'lucide-react';
+import { useScreenShare } from '../src/hooks/useScreenShare';
 
 // ─── Sonnerie entrante ────────────────────────────────────────────────────────
 function useRingtone(active) {
@@ -38,10 +40,16 @@ export default function CallModal({
   isMuted, isCamOff,
   localVideoRef, remoteVideoRef, remoteAudioRef,
   remoteStream,
+  peerConnection,
   onAccept, onReject, onHangUp,
   onToggleMute, onToggleCamera,
 }) {
   useRingtone(callState === 'incoming');
+
+  const { isSharing, startScreenShare, stopScreenShare } = useScreenShare({
+    peerConnection,
+    localVideoRef,
+  });
 
 useEffect(() => {
   console.log('[DEBUG CallModal] effect, remoteStream=', remoteStream, 'instanceof MediaStream:', remoteStream instanceof MediaStream);
@@ -72,13 +80,13 @@ useEffect(() => {
       <div style={s.overlay}>
         <audio ref={remoteAudioRef} autoPlay playsInline style={{ display: 'none' }} />
         <div style={s.card}>
-          <p style={s.subtitle}>{callState === 'calling' ? 'Appel en cours...' : '🎙 Appel audio actif'}</p>
+          <p style={s.subtitle}>{callState === 'calling' ? 'Appel en cours...' : 'Appel audio actif'}</p>
           {avatar(remoteUser?.username, remoteUser?.avatar, 80)}
           <p style={s.name}>{remoteUser?.username}</p>
 
           <div style={s.controls}>
-            <Btn icon={isMuted ? '🔇' : '🎙'} label={isMuted ? 'Activer' : 'Couper'} onClick={onToggleMute} active={isMuted} />
-            <Btn icon="📵" label="Raccrocher" onClick={onHangUp} danger />
+            <Btn icon={isMuted ? <MicOff size={22}/> : <Mic size={22}/>} label={isMuted ? 'Activer' : 'Couper'} onClick={onToggleMute} active={isMuted} />
+            <Btn icon={<PhoneOff size={22}/>} label="Raccrocher" onClick={onHangUp} danger />
           </div>
         </div>
       </div>
@@ -90,13 +98,13 @@ useEffect(() => {
     return (
       <div style={s.overlay}>
         <div style={s.card}>
-          <p style={s.subtitle}>📞 Appel {callType === 'video' ? 'vidéo' : 'audio'} entrant</p>
+          <p style={s.subtitle}>Appel {callType === 'video' ? 'vidéo' : 'audio'} entrant</p>
           {avatar(remoteUser?.username, remoteUser?.avatar, 80)}
           <p style={s.name}>{remoteUser?.username}</p>
 
           <div style={s.controls}>
-            <Btn icon="✅" label="Accepter" onClick={onAccept} green />
-            <Btn icon="❌" label="Refuser"  onClick={onReject} danger />
+            <Btn icon={<Phone size={22}/>} label="Accepter" onClick={onAccept} green />
+            <Btn icon={<PhoneMissed size={22}/>} label="Refuser" onClick={onReject} danger />
           </div>
         </div>
       </div>
@@ -129,9 +137,10 @@ useEffect(() => {
 
         {/* Contrôles */}
         <div style={s.videoControls}>
-          <Btn icon={isMuted  ? '🔇' : '🎙'} label={isMuted  ? 'Micro off' : 'Micro'} onClick={onToggleMute}  active={isMuted}  small />
-          <Btn icon={isCamOff ? '🚫' : '📷'} label={isCamOff ? 'Cam off'   : 'Caméra'} onClick={onToggleCamera} active={isCamOff} small />
-          <Btn icon="📵" label="Raccrocher" onClick={onHangUp} danger small />
+          <Btn icon={isMuted  ? <MicOff size={20}/> : <Mic size={20}/>} label={isMuted ? 'Micro off' : 'Micro'} onClick={onToggleMute} active={isMuted} small />
+          <Btn icon={isCamOff ? <VideoOff size={20}/> : <Video size={20}/>} label={isCamOff ? 'Cam off' : 'Caméra'} onClick={onToggleCamera} active={isCamOff} small />
+          <Btn icon={isSharing ? <MonitorOff size={20}/> : <Monitor size={20}/>} label={isSharing ? 'Arrêter' : 'Partager'} onClick={isSharing ? stopScreenShare : startScreenShare} active={isSharing} small />
+          <Btn icon={<PhoneOff size={20}/>} label="Raccrocher" onClick={onHangUp} danger small />
         </div>
       </div>
     );
@@ -151,7 +160,7 @@ function Btn({ icon, label, onClick, danger, green, active, small }) {
       color: '#fff', cursor: 'pointer', transition: 'opacity .15s',
       fontSize: small ? '1.3rem' : '1.6rem', minWidth: small ? 72 : 90,
     }}>
-      <span>{icon}</span>
+      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{icon}</span>
       <span style={{ fontSize: '0.7rem', fontWeight: 500 }}>{label}</span>
     </button>
   );

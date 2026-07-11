@@ -435,17 +435,97 @@ input, textarea { font-family: inherit; }
 /* ===== Responsive ===== */
 @media (max-width: 1100px) {
   .app, .app.details-open { grid-template-columns: var(--rail-w) var(--sidebar-w) 1fr; }
-  .app.details-open .details { position: fixed; right: 0; top: 0; bottom: 0; width: 300px; z-index: 50; box-shadow: -20px 0 50px rgba(0,0,0,0.5); }
+  .app.details-open .details { position: fixed; right: 0; top: 0; bottom: 0; width: 280px; z-index: 50; box-shadow: -20px 0 50px rgba(0,0,0,0.5); }
 }
+
+/* ── Tablette (820px → 600px) ─────────────────────────────────────────────── */
 @media (max-width: 820px) {
+  :root {
+    --sidebar-w: 280px;
+    --rail-w: 62px;
+  }
+
   .app { grid-template-columns: 1fr; }
   .rail { display: none; }
-  .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: min(86vw, 360px); z-index: 40; transform: translateX(-105%); transition: transform 0.28s cubic-bezier(.2,.9,.3,1); box-shadow: 20px 0 50px rgba(0,0,0,0.5); }
+  .sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0;
+    width: min(82vw, 320px); z-index: 40;
+    transform: translateX(-105%);
+    transition: transform 0.28s cubic-bezier(.2,.9,.3,1);
+    box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+  }
   .app.nav-open .sidebar { transform: translateX(0); }
   .chat { width: 100vw; }
   .chat-head .back { display: grid; }
-  .msg-row { max-width: 86%; }
+  .chat-head { padding: 10px 14px; gap: 10px; }
+  .chat-head .info .name { font-size: 14px; }
+  .chat-head .info .sub { font-size: 11.5px; }
+  .hicon { width: 36px; height: 36px; }
+
+  .messages { padding: 14px 12px 6px; gap: 3px; }
+  .msg-row { max-width: 88%; gap: 7px; }
+  .bubble { font-size: 13.5px; padding: 8px 12px; }
+  .m-sender { font-size: 11px; }
+  .meta { font-size: 10.5px; }
+
+  .composer { padding: 8px 12px 14px; }
+  .composer textarea { font-size: 13.5px; padding: 7px 4px; }
+  .send { width: 40px; height: 40px; }
+  .cicon { width: 34px; height: 34px; }
+
+  .sidebar-head h1 { font-size: 16px; }
+  .sidebar-head { padding: 14px 14px 10px; }
+  .search { margin: 10px 14px 4px; padding: 8px 10px; }
+  .conv { padding: 9px 8px; gap: 10px; }
+  .avatar { width: 40px; height: 40px; font-size: 13px; }
+  .conv-body .name { font-size: 13.5px; }
+  .conv-body .preview { font-size: 12px; }
+
+  .toast { min-width: 240px; max-width: 300px; padding: 10px 12px; }
+  .toast .t-title { font-size: 12.5px; }
+  .toast .t-text { font-size: 11.5px; }
+
   .mobile-only { display: grid; }
   .scrim { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 35; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
   .app.nav-open .scrim { opacity: 1; pointer-events: auto; }
+}
+
+/* ── Mobile (< 480px) ────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .chat-head { padding: 8px 10px; gap: 8px; }
+  .chat-head .info .name { font-size: 13px; }
+  .hicon { width: 32px; height: 32px; border-radius: 10px; }
+  .hicon svg { width: 17px; height: 17px; }
+
+  .messages { padding: 10px 8px 4px; }
+  .msg-row { max-width: 92%; gap: 6px; }
+  .bubble { font-size: 13px; padding: 7px 11px; border-radius: 14px; }
+  .msg-row .m-avatar { width: 26px; height: 26px; font-size: 10px; }
+
+  .composer { padding: 6px 8px 10px; }
+  .composer-inner { padding: 6px 8px; border-radius: 14px; gap: 6px; }
+  .composer textarea { font-size: 13px; max-height: 90px; }
+  .send { width: 36px; height: 36px; border-radius: 12px; }
+  .send svg { width: 17px; height: 17px; }
+  .cicon { width: 30px; height: 30px; border-radius: 10px; }
+  .cicon svg { width: 18px; height: 18px; }
+
+  .sidebar { width: min(88vw, 300px); }
+  .sidebar-head h1 { font-size: 15px; }
+  .avatar { width: 36px; height: 36px; font-size: 12px; }
+  .conv-body .name { font-size: 13px; }
+  .conv-body .preview { font-size: 11.5px; }
+  .chip { font-size: 11px; padding: 5px 10px; }
+
+  .call-modal { width: 96vw; height: auto; min-height: 70vh; border-radius: 18px; }
+  .tile .pa { width: 64px; height: 64px; font-size: 22px; }
+  .cc { width: 46px; height: 46px; }
+  .cc svg { width: 19px; height: 19px; }
+  .call-controls { padding: 12px; gap: 10px; }
+
+  .toast { min-width: 200px; max-width: 90vw; font-size: 12px; }
+  .toasts { top: 10px; right: 10px; }
+
+  .day-sep span { font-size: 10px; padding: 4px 10px; }
+  .section-label { font-size: 10px; padding: 6px 14px 3px; }
 }

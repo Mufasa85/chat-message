@@ -81,6 +81,13 @@ export const ChatProvider = ({ children }) => {
         setMessages((prev) => [...prev, data]);
         break;
 
+      // Réactions emoji
+      case 'reaction_updated':
+        setMessages((prev) =>
+          prev.map((m) => m._id === data.messageId ? { ...m, reactions: data.reactions } : m)
+        );
+        break;
+
       // WebRTC signaling
       case 'incoming_call':
         webrtcRef.current.handleIncomingCall(data);
@@ -245,12 +252,17 @@ export const ChatProvider = ({ children }) => {
     return Object.values(unreadCounts).reduce((sum, count) => sum + count, 0);
   }, [unreadCounts]);
 
+  const emitEvent = useCallback((event, data) => {
+    emitRef.current?.(event, data);
+  }, []);
+
   const value = useMemo(() => ({
     rooms, currentRoom, messages, onlineUsers, typingUsers, connected, unreadCounts,
     fetchRooms, joinRoom, sendMessage, sendGiphy, sendTyping, createRoom, addMessage,
     updateRoom, deleteRoom, deleteMessage, updateMessage,
     markRoomAsRead, getTotalUnread,
-  }), [rooms, currentRoom, messages, onlineUsers, typingUsers, connected, unreadCounts, fetchRooms, joinRoom, sendMessage, sendGiphy, sendTyping, createRoom, addMessage, updateRoom, deleteRoom, deleteMessage, updateMessage, markRoomAsRead, getTotalUnread]);
+    emit: emitEvent,
+  }), [rooms, currentRoom, messages, onlineUsers, typingUsers, connected, unreadCounts, fetchRooms, joinRoom, sendMessage, sendGiphy, sendTyping, createRoom, addMessage, updateRoom, deleteRoom, deleteMessage, updateMessage, markRoomAsRead, getTotalUnread, emitEvent]);
 
   const contextValue = useMemo(() => ({ ...value, webrtc }), [value, webrtc]);
 

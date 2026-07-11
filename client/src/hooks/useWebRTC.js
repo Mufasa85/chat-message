@@ -299,6 +299,7 @@ const attachRemoteStream = useCallback((stream) => {
     remoteVideoRef,
     remoteAudioRef,
     remoteStreamRef,
+    peerConnectionRef,
     // Actions utilisateur
     startCall,
     acceptCall,

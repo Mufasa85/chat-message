@@ -24,6 +24,13 @@ const messageSchema = new mongoose.Schema({
     index: true 
   },
 
+  // === RÉACTIONS EMOJI ===
+  reactions: {
+    type: Map,
+    of: [String],
+    default: {},
+  },
+
   // === CHAMPS ATTACHEMENT (Giphy, Cloudinary) ===
   attachment: {
     url:          { type: String },

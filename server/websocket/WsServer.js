@@ -3,6 +3,7 @@ const { parse } = require('url');
 const { verifyWsToken } = require('../middleware/auth');
 const Message = require('../models/Message');
 const User = require('../models/User');
+const { handleAddReaction, handleRemoveReaction } = require('./reactionHandlers');
 
 const rooms = new Map(); // roomId → Set<ws>
 const clients = new Map(); // ws → { user, roomId }
@@ -267,6 +268,10 @@ const initWsServer = (server) => {
           case 'join_room':      await handleJoinRoom(ws, data);     break;
           case 'send_message':   await handleSendMessage(ws, data);  break;
           case 'typing':         handleTyping(ws, data);             break;
+
+          // Réactions emoji
+          case 'add_reaction':    await handleAddReaction(ws, data, clients, broadcast);    break;
+          case 'remove_reaction': await handleRemoveReaction(ws, data, clients, broadcast); break;
 
           // WebRTC signaling
           case 'call_offer':     handleCallOffer(ws, data);          break;

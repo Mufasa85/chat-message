@@ -6,11 +6,14 @@ import GiphyPicker from '../../components/GiphyPicker';
 import MessageBubble from '../../components/MessageBubble';
 import CallModal from '../../components/CallModal';
 import CallButton from '../../components/CallButton';
+import VoiceRecorder from '../components/VoiceRecorder';
 
 // Construire les options de durée depuis l'environnement
 const durations = import.meta.env.VITE_EPHEMERAL_DURATIONS?.split(',').map(Number) || [10, 30, 60, 120, 300];
 const labels = import.meta.env.VITE_EPHEMERAL_LABELS?.split(',') || ['10 sec', '30 sec', '1 min', '2 min', '5 min'];
 const ttlOptions = durations.map((value, i) => ({ value, label: labels[i] || `${value}s` }));
+
+const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 function MessageInput({ token }) {
   const { sendMessage, sendTyping, sendGiphy, currentRoom, addMessage } = useChat();
@@ -132,6 +135,15 @@ function MessageInput({ token }) {
           rows={1}
         />
         
+        {currentRoom && (
+          <VoiceRecorder
+            roomId={currentRoom._id}
+            token={token}
+            apiUrl={API}
+            onSent={(msg) => addMessage(msg)}
+          />
+        )}
+
         <button
           onClick={handleSend}
           disabled={!currentRoom || !text.trim() || uploading}
@@ -773,6 +785,7 @@ export default function ChatPage() {
         remoteVideoRef={webrtc.remoteVideoRef}
         remoteAudioRef={webrtc.remoteAudioRef}
         remoteStream={webrtc.remoteStream}
+        peerConnection={webrtc.peerConnectionRef?.current}
         onAccept={webrtc.acceptCall}
         onReject={webrtc.rejectCall}
         onHangUp={webrtc.hangUp}

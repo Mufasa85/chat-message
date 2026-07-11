@@ -1,3 +1,5 @@
+import { Mic, Video } from 'lucide-react';
+
 export default function CallButton({ user, onCall }) {
   if (!user) return null;
   return (
@@ -7,14 +9,14 @@ export default function CallButton({ user, onCall }) {
         onClick={() => onCall(user, 'audio')}
         title={`Appel audio avec ${user.username}`}
       >
-        🎙
+        <Mic size={16} />
       </button>
       <button
         style={s.btn}
         onClick={() => onCall(user, 'video')}
         title={`Appel vidéo avec ${user.username}`}
       >
-        📹
+        <Video size={16} />
       </button>
     </div>
   );
