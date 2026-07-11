@@ -15,7 +15,7 @@ const ttlOptions = durations.map((value, i) => ({ value, label: labels[i] || `${
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
-function MessageInput({ token }) {
+function MessageInput({ token, replyTo, onCancelReply }) {
   const { sendMessage, sendTyping, sendGiphy, currentRoom, addMessage } = useChat();
   const [text, setText] = useState('');
   const [selectedTtl, setSelectedTtl] = useState(null);
@@ -42,9 +42,10 @@ function MessageInput({ token }) {
 
   const handleSend = () => {
     if (!text.trim()) return;
-    sendMessage(text, selectedTtl !== null, selectedTtl || 300);
+    sendMessage(text, selectedTtl !== null, selectedTtl || 300, replyTo || null);
     setText('');
     setSelectedTtl(null);
+    onCancelReply?.();
     clearTimeout(timer.current);
     sendTyping(false);
   };
@@ -65,6 +66,17 @@ function MessageInput({ token }) {
 
   return (
     <div className="p-2 sm:p-4 relative">
+      {replyTo && (
+        <div className="flex items-center gap-2 mb-1.5 px-2 py-1.5 bg-slate-700/40 rounded-lg border-l-2 border-indigo-400">
+          <div className="flex-1 min-w-0">
+            <p className="text-indigo-300 text-[10px] font-semibold truncate">{replyTo.author?.username}</p>
+            <p className="text-gray-400 text-xs truncate">{replyTo.type === 'audio' ? '🎤 Message vocal' : replyTo.type === 'image' ? '🖼 Image' : replyTo.content}</p>
+          </div>
+          <button onClick={onCancelReply} className="text-gray-500 hover:text-white p-0.5 flex-shrink-0">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      )}
       {uploading && (
         <div className="absolute top-0 left-0 right-0 h-1 bg-slate-700/50">
           <div className="h-full bg-indigo-500 transition-all duration-200" style={{ width: `${progress}%` }} />
@@ -252,7 +264,7 @@ function RoomItem({ room, isActive, onClick, unreadCount, isCreator, onEdit, onD
 
 export default function ChatPage() {
   const { user, token, logout } = useAuth();
-  const { messages, currentRoom, onlineUsers, typingUsers, rooms, joinRoom, fetchRooms, createRoom, updateRoom, deleteRoom, webrtc, unreadCounts, getTotalUnread } = useChat();
+  const { messages, currentRoom, onlineUsers, typingUsers, rooms, joinRoom, fetchRooms, createRoom, updateRoom, deleteRoom, webrtc, unreadCounts, getTotalUnread, toasts, dismissToast } = useChat();
   const [showCreate, setShowCreate] = useState(false);
   const [newRoomName, setNewRoomName] = useState('');
   const [newRoomDesc, setNewRoomDesc] = useState('');
@@ -264,6 +276,7 @@ export default function ChatPage() {
   const [editingRoom, setEditingRoom] = useState(null);
   const [editRoomName, setEditRoomName] = useState('');
   const [editRoomDesc, setEditRoomDesc] = useState('');
+  const [replyTo, setReplyTo] = useState(null);
   const bottomRef = useRef(null);
 
   useEffect(() => { fetchRooms(); }, [fetchRooms]);
@@ -532,7 +545,7 @@ export default function ChatPage() {
           ) : (
             <>
               {messages.map((msg) => (
-                <MessageBubble key={msg._id} msg={msg} isOwn={msg.author?._id === user?._id || msg.author === user?._id} />
+                <MessageBubble key={msg._id} msg={msg} isOwn={msg.author?._id === user?._id || msg.author === user?._id} onReply={(m) => setReplyTo(m)} />
               ))}
               {typingUsers.length > 0 && (
                 <div className="flex items-center gap-2 text-gray-400 text-sm mt-2">
@@ -549,7 +562,7 @@ export default function ChatPage() {
           <div ref={bottomRef} />
         </div>
 
-        <MessageInput token={token} />
+        <MessageInput token={token} replyTo={replyTo} onCancelReply={() => setReplyTo(null)} />
         
         {/* Mobile Footer */}
         <div className="md:hidden h-10 px-4 flex items-center justify-between bg-[#232428] border-t border-black/30">
@@ -772,6 +785,36 @@ export default function ChatPage() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Toasts de notification */}
+      {toasts.length > 0 && (
+        <div className="fixed top-4 right-4 z-[400] flex flex-col gap-2 max-w-[320px] w-[calc(100vw-2rem)]">
+          {toasts.map((t) => (
+            <div
+              key={t.id}
+              className="flex items-start gap-3 bg-[#1e1f22] border border-indigo-500/30 rounded-xl px-3 py-2.5 shadow-2xl cursor-pointer hover:bg-[#2a2b30] transition-colors animate-in slide-in-from-right-4"
+              onClick={() => { const room = rooms.find(r => String(r._id) === t.roomId); if (room) { joinRoom(room); setMobileSidebarOpen(false); } dismissToast(t.id); }}
+            >
+              <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                {t.author?.[0]?.toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <span className="text-white text-xs font-semibold truncate">{t.author}</span>
+                  <span className="text-indigo-400 text-[10px] truncate">#{t.roomName}</span>
+                </div>
+                <p className="text-gray-300 text-xs truncate">{t.preview}</p>
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); dismissToast(t.id); }}
+                className="text-gray-500 hover:text-white flex-shrink-0 p-0.5 mt-0.5"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          ))}
         </div>
       )}
 

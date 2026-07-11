@@ -9,7 +9,7 @@ const formatBytes = (b) => {
 };
 const fileIcon = (f) => ({ pdf:'📄',doc:'📝',docx:'📝',xls:'📊',xlsx:'📊',zip:'📦',txt:'🗒️',mp3:'🎵',wav:'🎵',mp4:'🎬',mov:'🎬' }[f?.toLowerCase()] || '📎');
 
-export default function MessageBubble({ msg, isOwn }) {
+export default function MessageBubble({ msg, isOwn, onReply }) {
   const { currentRoom, updateMessage, deleteMessage } = useChat();
   const [showMenu, setShowMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -38,6 +38,16 @@ export default function MessageBubble({ msg, isOwn }) {
       editInputRef.current.select();
     }
   }, [isEditing]);
+
+  const handleReply = () => {
+    setShowMenu(false);
+    onReply?.({
+      _id: msg._id,
+      content: msg.content,
+      type: msg.type,
+      author: msg.author,
+    });
+  };
 
   const handleEdit = () => {
     setShowMenu(false);
@@ -99,8 +109,8 @@ export default function MessageBubble({ msg, isOwn }) {
     file:   { display:'flex', alignItems:'center', gap:12, padding:'8px 12px', background:'rgba(0,0,0,0.2)', borderRadius:10, textDecoration:'none', color:'inherit', minWidth:240 },
     fname:  { color:'#e2e8f0', fontSize:'0.88rem', fontWeight:600, margin:0, maxWidth:160, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' },
     cap:    { color:'rgba(255,255,255,0.75)', fontSize:'0.82rem', margin:'4px 4px 0', fontStyle:'italic' },
-    menuBtn: { background:'transparent', border:'none', color:'#9ca3af', cursor:'pointer', padding:'4px 8px', borderRadius:'4px', fontSize:'1rem' },
-    menu:   { position:'absolute', top:'100%', right: isOwn ? 0 : 'auto', left: isOwn ? 'auto' : 0, marginTop:4, background:'#313338', borderRadius:8, boxShadow:'0 4px 12px rgba(0,0,0,0.3)', border:'1px solid rgba(255,255,255,0.1)', minWidth:140, zIndex:100 },
+    menuBtn: { background:'rgba(0,0,0,0.35)', border:'none', color:'#d1d5db', cursor:'pointer', padding:'2px 7px', borderRadius:6, fontSize:'1rem', lineHeight:1, backdropFilter:'blur(4px)' },
+    menu:   { position:'absolute', top:'100%', right:0, marginTop:4, background:'#313338', borderRadius:8, boxShadow:'0 4px 12px rgba(0,0,0,0.4)', border:'1px solid rgba(255,255,255,0.1)', minWidth:140, zIndex:100 },
     menuItem: { display:'flex', alignItems:'center', gap:8, padding:'10px 14px', color:'#e2e8f0', fontSize:'0.88rem', cursor:'pointer', border:'none', background:'none', width:'100%', textAlign:'left' },
     editInput: { background:'rgba(0,0,0,0.2)', border:'1px solid #6366f1', borderRadius:8, color:'#fff', padding:'8px 12px', fontSize:'1rem', width:'100%', outline:'none', resize:'none' },
   };
@@ -169,31 +179,30 @@ export default function MessageBubble({ msg, isOwn }) {
     <div style={{ ...s.row, justifyContent: isOwn ? 'flex-end' : 'flex-start' }}>
       {!isOwn && <div style={{ ...s.av, background: msg.author?.avatar||'#6366f1' }}>{msg.author?.username?.[0]?.toUpperCase()}</div>}
       <div>
-        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-          {!isOwn && <p style={{ color:'#9ca3af', fontSize:'0.78rem', margin:'0 0 3px 4px' }}>{msg.author?.username}</p>}
-          {isOwn && !isEditing && (
-            <div ref={menuRef} style={{ position:'relative' }}>
-              <button 
-                onClick={() => setShowMenu(!showMenu)}
-                style={s.menuBtn}
-                title="Options"
-              >
-                ⋮
-              </button>
+        {!isOwn && <p style={{ color:'#9ca3af', fontSize:'0.78rem', margin:'0 0 3px 4px' }}>{msg.author?.username}</p>}
+        <div style={{ position:'relative', display:'inline-block' }}>
+          {msg.replyTo && (
+            <div style={{ background: isOwn ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.06)', borderLeft:'3px solid #818cf8', borderRadius:'6px 6px 0 0', padding:'6px 10px', marginBottom:2, maxWidth:360, cursor:'default' }}>
+              <p style={{ color:'#818cf8', fontSize:'0.72rem', fontWeight:700, margin:'0 0 1px' }}>{msg.replyTo.author?.username}</p>
+              <p style={{ color:'#9ca3af', fontSize:'0.78rem', margin:0, overflow:'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis', maxWidth:280 }}>
+                {msg.replyTo.type === 'audio' ? '🎤 Message vocal' : msg.replyTo.type === 'image' ? '🖼 Image' : msg.replyTo.content}
+              </p>
+            </div>
+          )}
+          <div style={{ ...s.bubble, ...(isOwn?s.own:s.other), ...(isMedia?s.media:{}), ...(msg.replyTo ? { borderTopLeftRadius:0, borderTopRightRadius:0 } : {}) }}>{content()}</div>
+          {!isEditing && (
+            <div ref={menuRef} style={{ position:'absolute', top:6, right: isOwn ? -28 : 'auto', left: isOwn ? 'auto' : -28, zIndex:10 }}>
+              <button onClick={() => setShowMenu(!showMenu)} style={s.menuBtn} title="Options">⋮</button>
               {showMenu && (
-                <div style={s.menu}>
-                  <button onClick={handleEdit} style={s.menuItem} className="hover:bg-[#404249]">
-                    Modifier
-                  </button>
-                  <button onClick={handleDelete} style={{ ...s.menuItem, color:'#ef4444' }} className="hover:bg-[#404249]">
-                    Supprimer
-                  </button>
+                <div style={{ ...s.menu, right: isOwn ? 0 : 'auto', left: isOwn ? 'auto' : 0 }}>
+                  <button onClick={handleReply} style={s.menuItem} className="hover:bg-[#404249]">Répondre</button>
+                  {isOwn && <button onClick={handleEdit} style={s.menuItem} className="hover:bg-[#404249]">Modifier</button>}
+                  {isOwn && <button onClick={handleDelete} style={{ ...s.menuItem, color:'#ef4444' }} className="hover:bg-[#404249]">Supprimer</button>}
                 </div>
               )}
             </div>
           )}
         </div>
-        <div style={{ ...s.bubble, ...(isOwn?s.own:s.other), ...(isMedia?s.media:{}) }}>{content()}</div>
         <p style={{ ...s.time, textAlign: isOwn?'right':'left' }}>
           {new Date(msg.createdAt).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}
           {msg.createdAt !== msg.updatedAt && <span style={{ marginLeft:4, fontStyle:'italic' }}></span>}

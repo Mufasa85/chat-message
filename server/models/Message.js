@@ -24,6 +24,14 @@ const messageSchema = new mongoose.Schema({
     index: true 
   },
 
+  // === RÉPONSE À UN MESSAGE ===
+  replyTo: {
+    _id:      { type: String },
+    content:  { type: String },
+    type:     { type: String },
+    author:   { username: { type: String } },
+  },
+
   // === RÉACTIONS EMOJI ===
   reactions: {
     type: Map,

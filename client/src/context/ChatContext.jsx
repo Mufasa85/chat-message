@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useRef, useMemo } from 'react';
+import { createContext, useContext, useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useWebRTC } from '../hooks/useWebRTC';
 import { useAuth } from './AuthContext';
@@ -22,6 +22,25 @@ export const ChatProvider = ({ children }) => {
     } catch { return {}; }
   });
   const emitRef = useRef(null);
+  const [toasts, setToasts] = useState([]);
+  const roomsRef = useRef([]);
+  roomsRef.current = rooms;
+
+  const addToast = useCallback((toast) => {
+    const id = Date.now();
+    setToasts((prev) => [...prev.slice(-3), { ...toast, id }]);
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000);
+  }, []);
+
+  const dismissToast = useCallback((id) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  useEffect(() => {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
 
   // ── WebRTC ─────────────────────────────────────────────────────────────────
   const webrtc = useWebRTC({
@@ -41,23 +60,30 @@ export const ChatProvider = ({ children }) => {
         const messageRoomId = String(data.room);
         const currentRoomId = currentRoom ? String(currentRoom._id) : null;
         
-        // Only increment if NOT in the current room (and currentRoom exists)
-        if (currentRoomId && messageRoomId !== currentRoomId) {
-          setUnreadCounts((prev) => {
-            const newCounts = { ...prev, [messageRoomId]: (prev[messageRoomId] || 0) + 1 };
-            localStorage.setItem('unreadCounts', JSON.stringify(newCounts));
-            console.log('[Chat] Badge incrementé pour room:', messageRoomId, 'total:', newCounts[messageRoomId]);
-            return newCounts;
-          });
-        } else if (!currentRoomId) {
-          // currentRoom is null, just increment the count
+        const isOtherRoom = (currentRoomId && messageRoomId !== currentRoomId) || !currentRoomId;
+        if (isOtherRoom) {
           setUnreadCounts((prev) => {
             const newCounts = { ...prev, [messageRoomId]: (prev[messageRoomId] || 0) + 1 };
             localStorage.setItem('unreadCounts', JSON.stringify(newCounts));
             return newCounts;
           });
+
+          const roomName = roomsRef.current.find((r) => String(r._id) === messageRoomId)?.name || 'Salon';
+          const author = data.author?.username || 'Quelqu\'un';
+          const preview = data.type === 'audio' ? '🎤 Message vocal'
+            : data.type === 'image' ? '🖼 Image'
+            : (data.content || '').slice(0, 60);
+
+          addToast({ roomId: messageRoomId, roomName, author, preview });
+
+          if (typeof Notification !== 'undefined' && Notification.permission === 'granted' && document.hidden) {
+            new Notification(`${author} — #${roomName}`, {
+              body: preview,
+              icon: '/favicon.ico',
+              tag: messageRoomId,
+            });
+          }
         }
-        // If message is in current room, no need to update unread counts
         break;
       }
       case 'room_users':
@@ -137,14 +163,15 @@ export const ChatProvider = ({ children }) => {
     emitRef.current('join_room', { roomId: room._id });
   }, [token]);
 
-  const sendMessage = useCallback((content, ephemeral = false, ttl = 300) => {
+  const sendMessage = useCallback((content, ephemeral = false, ttl = 300, replyTo = null) => {
     if (!currentRoom || !content.trim()) return;
     emitRef.current('send_message', { 
       roomId: currentRoom._id, 
       content,
       type: 'text',
       ephemeral,
-      ttl
+      ttl,
+      replyTo,
     });
   }, [currentRoom]);
 
@@ -261,8 +288,9 @@ export const ChatProvider = ({ children }) => {
     fetchRooms, joinRoom, sendMessage, sendGiphy, sendTyping, createRoom, addMessage,
     updateRoom, deleteRoom, deleteMessage, updateMessage,
     markRoomAsRead, getTotalUnread,
+    toasts, dismissToast,
     emit: emitEvent,
-  }), [rooms, currentRoom, messages, onlineUsers, typingUsers, connected, unreadCounts, fetchRooms, joinRoom, sendMessage, sendGiphy, sendTyping, createRoom, addMessage, updateRoom, deleteRoom, deleteMessage, updateMessage, markRoomAsRead, getTotalUnread, emitEvent]);
+  }), [rooms, currentRoom, messages, onlineUsers, typingUsers, connected, unreadCounts, fetchRooms, joinRoom, sendMessage, sendGiphy, sendTyping, createRoom, addMessage, updateRoom, deleteRoom, deleteMessage, updateMessage, markRoomAsRead, getTotalUnread, toasts, dismissToast, emitEvent]);
 
   const contextValue = useMemo(() => ({ ...value, webrtc }), [value, webrtc]);
 

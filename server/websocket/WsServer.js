@@ -85,7 +85,7 @@ const handleJoinRoom = async (ws, { roomId }) => {
   send(ws, 'joined_room', { roomId });
 };
 
-const handleSendMessage = async (ws, { roomId, content, type, attachment, ephemeral = false, ttl = 300 }) => {
+const handleSendMessage = async (ws, { roomId, content, type, attachment, ephemeral = false, ttl = 300, replyTo }) => {
   const state = clients.get(ws);
   if (!state) return;
   
@@ -104,7 +104,8 @@ const handleSendMessage = async (ws, { roomId, content, type, attachment, epheme
       author: state.user._id,
       content: trimmedContent,
       type: type || 'text',
-      attachment: attachment || undefined
+      attachment: attachment || undefined,
+      replyTo: replyTo || undefined,
     };
     
     if (ephemeral) {
@@ -127,6 +128,7 @@ const handleSendMessage = async (ws, { roomId, content, type, attachment, epheme
       content: message.content,
       type: message.type,
       attachment: message.attachment,
+      replyTo: message.replyTo || null,
       createdAt: message.createdAt,
       ephemeral: message.ephemeral,
       ttl: message.ttl,
