@@ -119,53 +119,63 @@ export default function VoiceRecorder({ roomId, token, onSent, apiUrl }) {
 
   const formatDuration = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
-  const st = {
-    container: { display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'rgba(51,65,85,0.55)', borderRadius: 12 },
-    btn: (color) => ({ background: color, border: 'none', borderRadius: '50%', width: 38, height: 38, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0, transition: 'opacity .15s' }),
-    timer: { color: '#ef4444', fontWeight: 700, fontSize: '0.9rem', minWidth: 40 },
-    pulse: { width: 9, height: 9, borderRadius: '50%', background: '#ef4444', animation: 'pulse 1s infinite' },
-    error: { color: '#ef4444', fontSize: '0.82rem', marginTop: 4 },
-    audio: { flex: 1, height: 32 },
+  const btn = (color, size = 32) => ({
+    background: color, border: 'none', borderRadius: '50%',
+    width: size, height: size, cursor: 'pointer',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    color: '#fff', flexShrink: 0,
+  });
+
+  const overlay = {
+    position: 'absolute', bottom: '100%', left: 0, right: 0,
+    marginBottom: 6, zIndex: 40,
+    background: '#1e2027',
+    border: '1px solid rgba(99,102,241,0.35)',
+    borderRadius: 12,
+    padding: '10px 12px',
+    boxShadow: '0 -4px 20px rgba(0,0,0,0.5)',
   };
 
   if (state === 'idle') return (
-    <button onClick={startRecording} style={st.btn('#6366f1')} title="Enregistrer un message vocal">
-      <Mic size={18} />
+    <button onClick={startRecording} style={btn('#6366f1')} title="Enregistrer un message vocal">
+      <Mic size={16} />
     </button>
   );
 
   if (state === 'recording') return (
-    <div style={st.container}>
-      <div style={st.pulse} />
-      <span style={st.timer}>{formatDuration(duration)}</span>
-      <span style={{ color: '#9ca3af', fontSize: '0.85rem', flex: 1 }}>Enregistrement...</span>
-      <button onClick={stopRecording} style={st.btn('#ef4444')} title="Arrêter"><Square size={16} /></button>
-      <button onClick={cancel} style={st.btn('#4b5563')} title="Annuler"><X size={16} /></button>
+    <div style={overlay}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', animation: 'pulse 1s infinite', flexShrink: 0 }} />
+        <span style={{ color: '#ef4444', fontWeight: 700, fontSize: '0.9rem', minWidth: 38 }}>{formatDuration(duration)}</span>
+        <span style={{ color: '#9ca3af', fontSize: '0.82rem', flex: 1 }}>Enregistrement…</span>
+        <button onClick={stopRecording} style={btn('#ef4444')} title="Arrêter"><Square size={14} /></button>
+        <button onClick={cancel} style={btn('#4b5563')} title="Annuler"><X size={14} /></button>
+      </div>
     </div>
   );
 
   if (state === 'preview') return (
-    <div style={{ ...st.container, flexDirection: 'column', alignItems: 'stretch' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <Mic size={18} style={{ color: '#6366f1', flexShrink: 0 }} />
-        <audio src={audioUrl} controls style={st.audio} />
-        <span style={{ color: '#9ca3af', fontSize: '0.8rem' }}>{formatDuration(duration)}</span>
+    <div style={overlay}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+        <Mic size={15} style={{ color: '#818cf8', flexShrink: 0 }} />
+        <audio src={audioUrl} controls style={{ flex: 1, height: 28, minWidth: 0 }} />
+        <span style={{ color: '#9ca3af', fontSize: '0.75rem', flexShrink: 0 }}>{formatDuration(duration)}</span>
       </div>
-      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-        <button onClick={send} style={{ flex: 1, background: '#6366f1', color: '#fff', border: 'none', borderRadius: 8, padding: '8px', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-          <Send size={15} /> Envoyer
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button onClick={send} style={{ flex: 1, background: '#6366f1', color: '#fff', border: 'none', borderRadius: 8, padding: '7px', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+          <Send size={13} /> Envoyer
         </button>
-        <button onClick={cancel} style={{ flex: 1, background: '#4b5563', color: '#fff', border: 'none', borderRadius: 8, padding: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-          <X size={15} /> Annuler
+        <button onClick={cancel} style={{ flex: 1, background: '#374151', color: '#fff', border: 'none', borderRadius: 8, padding: '7px', cursor: 'pointer', fontSize: '0.82rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+          <X size={13} /> Annuler
         </button>
       </div>
-      {error && <p style={st.error}>{error}</p>}
+      {error && <p style={{ color: '#ef4444', fontSize: '0.78rem', marginTop: 6 }}>{error}</p>}
     </div>
   );
 
   if (state === 'uploading') return (
-    <div style={st.container}>
-      <span style={{ color: '#9ca3af', fontSize: '0.85rem' }}>Envoi en cours...</span>
+    <div style={overlay}>
+      <span style={{ color: '#9ca3af', fontSize: '0.82rem' }}>Envoi en cours…</span>
     </div>
   );
 

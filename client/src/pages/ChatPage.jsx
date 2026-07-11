@@ -116,14 +116,14 @@ function MessageInput({ token }) {
         
         <FileInput roomId={currentRoom?._id} disabled={!currentRoom || uploading} />
         
-        <button
+        {/* <button
           onClick={() => setShowGiphy(!showGiphy)}
           disabled={!currentRoom || uploading}
           className="text-gray-500 hover:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed p-1.5 sm:p-2 rounded-lg hover:bg-slate-700/50 transition-all"
           title="Envoyer un GIF"
         >
           <span className="text-sm sm:text-lg">🎬</span>
-        </button>
+        </button> */}
         
         <textarea
           className="flex-1 bg-transparent text-white placeholder-slate-500 text-xs sm:text-sm resize-none outline-none max-h-24 sm:max-h-32"
@@ -136,12 +136,14 @@ function MessageInput({ token }) {
         />
         
         {currentRoom && (
-          <VoiceRecorder
-            roomId={currentRoom._id}
-            token={token}
-            apiUrl={API}
-            onSent={(msg) => addMessage(msg)}
-          />
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <VoiceRecorder
+              roomId={currentRoom._id}
+              token={token}
+              apiUrl={API}
+              onSent={(msg) => addMessage(msg)}
+            />
+          </div>
         )}
 
         <button
