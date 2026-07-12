@@ -23,6 +23,7 @@ export const ChatProvider = ({ children }) => {
   });
   const emitRef = useRef(null);
   const [toasts, setToasts] = useState([]);
+  const [dmUnread, setDmUnread] = useState(0);
   const roomsRef = useRef([]);
   roomsRef.current = rooms;
 
@@ -113,6 +114,26 @@ export const ChatProvider = ({ children }) => {
           prev.map((m) => m._id === data.messageId ? { ...m, reactions: data.reactions } : m)
         );
         break;
+
+      // DM entrant
+      case 'dm_notification': {
+        setDmUnread((prev) => prev + 1);
+        addToast({
+          roomId: null,
+          roomName: null,
+          author: data.fromUser?.username || 'Quelqu\'un',
+          preview: data.preview || 'Message privé',
+          isDM: true,
+          fromUser: data.fromUser,
+        });
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted' && document.hidden) {
+          new Notification(`💬 ${data.fromUser?.username}`, {
+            body: data.preview || 'Nouveau message privé',
+            icon: '/favicon.ico',
+          });
+        }
+        break;
+      }
 
       // WebRTC signaling
       case 'incoming_call':
@@ -283,14 +304,17 @@ export const ChatProvider = ({ children }) => {
     emitRef.current?.(event, data);
   }, []);
 
+  const clearDmUnread = useCallback(() => setDmUnread(0), []);
+
   const value = useMemo(() => ({
     rooms, currentRoom, messages, onlineUsers, typingUsers, connected, unreadCounts,
     fetchRooms, joinRoom, sendMessage, sendGiphy, sendTyping, createRoom, addMessage,
     updateRoom, deleteRoom, deleteMessage, updateMessage,
     markRoomAsRead, getTotalUnread,
     toasts, dismissToast,
+    dmUnread, clearDmUnread,
     emit: emitEvent,
-  }), [rooms, currentRoom, messages, onlineUsers, typingUsers, connected, unreadCounts, fetchRooms, joinRoom, sendMessage, sendGiphy, sendTyping, createRoom, addMessage, updateRoom, deleteRoom, deleteMessage, updateMessage, markRoomAsRead, getTotalUnread, toasts, dismissToast, emitEvent]);
+  }), [rooms, currentRoom, messages, onlineUsers, typingUsers, connected, unreadCounts, fetchRooms, joinRoom, sendMessage, sendGiphy, sendTyping, createRoom, addMessage, updateRoom, deleteRoom, deleteMessage, updateMessage, markRoomAsRead, getTotalUnread, toasts, dismissToast, dmUnread, clearDmUnread, emitEvent]);
 
   const contextValue = useMemo(() => ({ ...value, webrtc }), [value, webrtc]);
 

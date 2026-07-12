@@ -18,6 +18,7 @@ const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
     const resourceType = getResourceType(file.mimetype);
+    const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
     return {
       folder: `chatapp/${resourceType}s`,
       resource_type: resourceType,
@@ -27,9 +28,14 @@ const storage = new CloudinaryStorage({
         'mp3','wav','ogg','m4a',
         'pdf','doc','docx','xls','xlsx','txt','zip',
       ],
-      transformation: resourceType === 'image'
-        ? [{ quality: 'auto', fetch_format: 'auto' }]
-        : undefined,
+      use_filename: true,
+      unique_filename: true,
+      ...(resourceType === 'image'
+        ? { transformation: [{ quality: 'auto', fetch_format: 'auto' }] }
+        : {}),
+      ...(resourceType === 'raw'
+        ? { type: 'upload', public_id: `chatapp/raws/${safeName}` }
+        : {}),
     };
   },
 });

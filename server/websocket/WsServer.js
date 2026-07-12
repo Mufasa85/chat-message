@@ -4,6 +4,7 @@ const { verifyWsToken } = require('../middleware/auth');
 const Message = require('../models/Message');
 const User = require('../models/User');
 const { handleAddReaction, handleRemoveReaction } = require('./reactionHandlers');
+const DirectMessage = require('../models/DirectMessage');
 
 const rooms = new Map(); // roomId → Set<ws>
 const clients = new Map(); // ws → { user, roomId }
@@ -121,7 +122,7 @@ const handleSendMessage = async (ws, { roomId, content, type, attachment, epheme
     
     await message.populate('author', 'username avatar');
     
-    broadcast(roomId, 'new_message', {
+    const msgPayload = {
       _id: message._id,
       room: roomId,
       author: { _id: state.user._id, username: state.user.username, avatar: state.user.avatar },
@@ -133,7 +134,23 @@ const handleSendMessage = async (ws, { roomId, content, type, attachment, epheme
       ephemeral: message.ephemeral,
       ttl: message.ttl,
       expiresAt: message.expiresAt,
-    });
+    };
+    broadcast(roomId, 'new_message', msgPayload);
+
+    // Notification aux membres du salon qui ne sont PAS dans ce salon
+    for (const [uid, sockets] of onlineUsers) {
+      if (uid === String(state.user._id)) continue;
+      for (const memberWs of sockets) {
+        const memberState = clients.get(memberWs);
+        if (memberState && memberState.roomId !== roomId) {
+          send(memberWs, 'room_notification', {
+            roomId,
+            fromUser: { username: state.user.username, avatar: state.user.avatar },
+            preview:  message.content || '📎 Fichier',
+          });
+        }
+      }
+    }
   } catch (err) {
     send(ws, 'error', { message: "Erreur lors de l'envoi du message" });
   }
@@ -196,6 +213,47 @@ const handleCallEnd = (ws, { targetUserId, reason }) => {
 };
 
 // ─── Handlers Chat ────────────────────────────────────────────────────────────
+
+// ─── Handler DM ─────────────────────────────────────────────────────────────
+const handleSendDM = async (ws, { toUserId, content, type, attachment }) => {
+  const state = clients.get(ws);
+  if (!state) return;
+  if (!content?.trim() && !attachment) return;
+
+  try {
+    const msg = await DirectMessage.create({
+      from: state.user._id,
+      to:   toUserId,
+      content: content?.trim() || '',
+      type: type || 'text',
+      attachment: attachment || undefined,
+    });
+    await msg.populate('from', 'username avatar');
+    await msg.populate('to',   'username avatar');
+
+    const payload = {
+      _id:       msg._id,
+      from:      { _id: state.user._id, username: state.user.username, avatar: state.user.avatar },
+      to:        { _id: toUserId },
+      content:   msg.content,
+      type:      msg.type,
+      attachment: msg.attachment,
+      createdAt: msg.createdAt,
+    };
+
+    // Envoyer à l'expéditeur
+    send(ws, 'new_dm', payload);
+    // Envoyer au destinataire s'il est connecté
+    broadcastToUser(toUserId, 'new_dm', payload);
+    // Notification au destinataire
+    broadcastToUser(toUserId, 'dm_notification', {
+      fromUser: { _id: state.user._id, username: state.user.username, avatar: state.user.avatar },
+      preview:  msg.content || '📎 Fichier',
+    });
+  } catch (err) {
+    send(ws, 'error', { message: 'Erreur envoi message privé' });
+  }
+};
 
 const handleTyping = (ws, { roomId, isTyping }) => {
   const state = clients.get(ws);
@@ -274,6 +332,9 @@ const initWsServer = (server) => {
           // Réactions emoji
           case 'add_reaction':    await handleAddReaction(ws, data, clients, broadcast);    break;
           case 'remove_reaction': await handleRemoveReaction(ws, data, clients, broadcast); break;
+
+          // Messages privés
+          case 'send_dm':        await handleSendDM(ws, data);       break;
 
           // WebRTC signaling
           case 'call_offer':     handleCallOffer(ws, data);          break;

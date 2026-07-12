@@ -9,6 +9,12 @@ const formatBytes = (b) => {
 };
 const fileIcon = (f) => ({ pdf:'📄',doc:'📝',docx:'📝',xls:'📊',xlsx:'📊',zip:'📦',txt:'🗒️',mp3:'🎵',wav:'🎵',mp4:'🎬',mov:'🎬' }[f?.toLowerCase()] || '📎');
 
+const toDownloadUrl = (url, filename) => {
+  if (!url || !url.includes('cloudinary.com')) return url;
+  const safe = (filename || 'fichier').replace(/[^a-zA-Z0-9._-]/g, '_');
+  return url.replace('/upload/', `/upload/fl_attachment:${safe}/`);
+};
+
 export default function MessageBubble({ msg, isOwn, onReply }) {
   const { currentRoom, updateMessage, deleteMessage } = useChat();
   const [showMenu, setShowMenu] = useState(false);
@@ -163,7 +169,7 @@ export default function MessageBubble({ msg, isOwn, onReply }) {
       </div>
     );
     if (msg.type === 'file') return (
-      <a href={att?.secureUrl||att?.url} target="_blank" rel="noreferrer" style={s.file}>
+      <a href={toDownloadUrl(att?.secureUrl||att?.url, att?.filename)} download={att?.filename} target="_blank" rel="noreferrer" style={s.file}>
         <span style={{ fontSize:'1.8rem' }}>{fileIcon(att?.format)}</span>
         <div><p style={s.fname}>{att?.filename}</p><p style={{ color:'#9ca3af', fontSize:'0.75rem', margin:'2px 0 0' }}>{formatBytes(att?.bytes)}</p></div>
         <span style={{ marginLeft:'auto', color:'#9ca3af' }}>⬇</span>

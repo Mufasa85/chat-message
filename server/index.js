@@ -9,6 +9,7 @@ const authRoutes = require('./routes/auth');
 const roomRoutes = require('./routes/rooms');
 const uploadRoutes = require('./routes/upload');
 const adminRoutes = require('./routes/admin'); // ← AJOUT
+const dmRoutes    = require('./routes/dm');
 const { initWsServer } = require('./websocket/WsServer');
 const cleanupService = require('./services/cleanupExpiredMessages');
 
@@ -45,6 +46,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/admin', adminRoutes); // ← AJOUT
+app.use('/api/dm',    dmRoutes);
 app.get('/api/health', (_, res) => res.json({ status: 'ok' }));
 
 initWsServer(server);

@@ -9,6 +9,7 @@ import CallButton from '../../components/CallButton';
 import VoiceRecorder from '../components/VoiceRecorder';
 import ProfilePage from './ProfilePage';
 import AdminPage from './AdminPage';
+import DMPage from './DMPage';
 
 // Construire les options de durée depuis l'environnement
 const durations = import.meta.env.VITE_EPHEMERAL_DURATIONS?.split(',').map(Number) || [10, 30, 60, 120, 300];
@@ -266,7 +267,7 @@ function RoomItem({ room, isActive, onClick, unreadCount, isCreator, onEdit, onD
 
 export default function ChatPage() {
   const { user, token, logout } = useAuth();
-  const { messages, currentRoom, onlineUsers, typingUsers, rooms, joinRoom, fetchRooms, createRoom, updateRoom, deleteRoom, webrtc, unreadCounts, getTotalUnread, toasts, dismissToast } = useChat();
+  const { messages, currentRoom, onlineUsers, typingUsers, rooms, joinRoom, fetchRooms, createRoom, updateRoom, deleteRoom, webrtc, unreadCounts, getTotalUnread, toasts, dismissToast, dmUnread, clearDmUnread } = useChat();
   const [showCreate, setShowCreate] = useState(false);
   const [newRoomName, setNewRoomName] = useState('');
   const [newRoomDesc, setNewRoomDesc] = useState('');
@@ -281,6 +282,7 @@ export default function ChatPage() {
   const [replyTo, setReplyTo] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [showDM, setShowDM] = useState(false);
   const bottomRef = useRef(null);
 
   useEffect(() => { fetchRooms(); }, [fetchRooms]);
@@ -354,6 +356,16 @@ export default function ChatPage() {
                       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
                     </svg>
                     <span>Mon profil</span>
+                  </button>
+                  <button
+                    onClick={() => { setShowDM(true); clearDmUnread(); setMobileSidebarOpen(false); }}
+                    className="w-full flex items-center gap-2.5 px-2 py-2 rounded-md text-gray-400 hover:bg-[#35373c] hover:text-white transition-colors text-sm"
+                  >
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    <span className="flex-1 text-left">Messages privés</span>
+                    {dmUnread > 0 && <span className="bg-indigo-500 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5">{dmUnread}</span>}
                   </button>
                   {user?.role === 'admin' && (
                     <button
@@ -468,6 +480,16 @@ export default function ChatPage() {
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
                 </svg>
                 <span>Mon profil</span>
+              </button>
+              <button
+                onClick={() => { setShowDM(true); clearDmUnread(); }}
+                className="w-full flex items-center gap-2.5 px-2 py-2 rounded-md text-gray-400 hover:bg-[#35373c] hover:text-white transition-colors text-sm"
+              >
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span className="flex-1 text-left">Messages privés</span>
+                {dmUnread > 0 && <span className="bg-indigo-500 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5">{dmUnread}</span>}
               </button>
               {user?.role === 'admin' && (
                 <button
@@ -861,6 +883,9 @@ export default function ChatPage() {
       {/* Administration */}
       {showAdmin && <AdminPage onClose={() => setShowAdmin(false)} />}
 
+      {/* Messages privés */}
+      {showDM && <DMPage onClose={() => setShowDM(false)} />}
+
       {/* Toasts de notification */}
       {toasts.length > 0 && (
         <div className="fixed top-4 right-4 z-[400] flex flex-col gap-2 max-w-[320px] w-[calc(100vw-2rem)]">
@@ -868,7 +893,7 @@ export default function ChatPage() {
             <div
               key={t.id}
               className="flex items-start gap-3 bg-[#1e1f22] border border-indigo-500/30 rounded-xl px-3 py-2.5 shadow-2xl cursor-pointer hover:bg-[#2a2b30] transition-colors animate-in slide-in-from-right-4"
-              onClick={() => { const room = rooms.find(r => String(r._id) === t.roomId); if (room) { joinRoom(room); setMobileSidebarOpen(false); } dismissToast(t.id); }}
+              onClick={() => { if (t.isDM) { setShowDM(true); clearDmUnread(); } else { const room = rooms.find(r => String(r._id) === t.roomId); if (room) { joinRoom(room); setMobileSidebarOpen(false); } } dismissToast(t.id); }}
             >
               <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                 {t.author?.[0]?.toUpperCase()}
@@ -876,7 +901,7 @@ export default function ChatPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <span className="text-white text-xs font-semibold truncate">{t.author}</span>
-                  <span className="text-indigo-400 text-[10px] truncate">#{t.roomName}</span>
+                  {t.isDM ? <span className="text-violet-400 text-[10px]">💬 Message privé</span> : <span className="text-indigo-400 text-[10px] truncate">#{t.roomName}</span>}
                 </div>
                 <p className="text-gray-300 text-xs truncate">{t.preview}</p>
               </div>
