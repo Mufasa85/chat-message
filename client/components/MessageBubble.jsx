@@ -105,7 +105,7 @@ export default function MessageBubble({ msg, isOwn, onReply }) {
   const s = {
     row:    { display:'flex', alignItems:'flex-end', gap:8, position:'relative' },
     av:     { width:34, height:34, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontWeight:700, fontSize:'0.9rem', flexShrink:0 },
-    bubble: { padding:'12px 16px', borderRadius:14, fontSize:'1rem', lineHeight:1.5, overflowWrap:'break-word', wordBreak:'normal', maxWidth:360 },
+    bubble: { padding:'12px 16px', borderRadius:14, fontSize:'1rem', lineHeight:1.5, overflowWrap:'anywhere', wordBreak:'normal' },
     own:    { background:'#6366f1', color:'#fff', borderBottomRightRadius:4 },
     other:  { background:'#2d2d4e', color:'#e2e8f0', borderBottomLeftRadius:4 },
     media:  { padding:4, borderRadius:14 },
@@ -182,9 +182,9 @@ export default function MessageBubble({ msg, isOwn, onReply }) {
   return (
     <div style={{ ...s.row, justifyContent: isOwn ? 'flex-end' : 'flex-start' }}>
       {!isOwn && <div style={{ ...s.av, background: msg.author?.avatar||'#6366f1' }}>{msg.author?.username?.[0]?.toUpperCase()}</div>}
-      <div>
+      <div style={{ maxWidth:'calc(100vw - 100px)', flex: '0 1 auto' }}>
         {!isOwn && <p style={{ color:'#9ca3af', fontSize:'0.78rem', margin:'0 0 3px 4px' }}>{msg.author?.username}</p>}
-        <div style={{ position:'relative', display:'inline-block' }}>
+        <div style={{ position:'relative' }}>
           {msg.replyTo && (
             <div style={{ background: isOwn ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.06)', borderLeft:'3px solid #818cf8', borderRadius:'6px 6px 0 0', padding:'6px 10px', marginBottom:2, maxWidth:360, cursor:'default' }}>
               <p style={{ color:'#818cf8', fontSize:'0.72rem', fontWeight:700, margin:'0 0 1px' }}>{msg.replyTo.author?.username}</p>
