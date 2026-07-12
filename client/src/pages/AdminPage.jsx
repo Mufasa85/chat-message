@@ -66,7 +66,7 @@ const isMobile = () => window.innerWidth < 640;
 // ── Styles partagés ──────────────────────────────────────────────
 const S = {
   overlay: { position:'fixed', inset:0, background:'rgba(0,0,0,0.72)', display:'flex', alignItems:'flex-end', justifyContent:'center', zIndex:300 },
-  panel:   { background:'#111827', width:'100%', maxWidth:1100, borderRadius:'20px 20px 0 0', display:'flex', flexDirection:'column', height:'92vh', overflow:'hidden', boxShadow:'0 -8px 40px rgba(0,0,0,0.7)', border:'1px solid rgba(255,255,255,0.07)' },
+  panel:   { background:'#111827', width:'100%', maxWidth:1100, borderRadius:'20px 20px 0 0', display:'flex', flexDirection:'column', height:'98vh', overflow:'hidden', boxShadow:'0 -8px 40px rgba(0,0,0,0.7)', border:'1px solid rgba(255,255,255,0.07)' },
   header:  { background:'#1f2937', padding:'12px 16px', display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:'1px solid rgba(255,255,255,0.07)', flexShrink:0 },
   sidebar: { width:180, background:'#1a1f2e', borderRight:'1px solid rgba(255,255,255,0.06)', flexShrink:0 },
   content: { flex:1, overflowY:'auto', padding:16 },
