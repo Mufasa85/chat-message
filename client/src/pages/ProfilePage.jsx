@@ -48,11 +48,11 @@ function StatCard({ icon, label, value, color = '#6366f1' }) {
 
 function Section({ title, children }) {
   return (
-    <div style={{ marginBottom: 28 }}>
+    <div style={{ marginBottom: 14 }}>
       <h3 style={{
-        color: '#9ca3af', fontSize: '0.78rem', fontWeight: 600,
+        color: '#9ca3af', fontSize: '0.68rem', fontWeight: 600,
         textTransform: 'uppercase', letterSpacing: '0.08em',
-        margin: '0 0 12px', paddingBottom: 8,
+        margin: '0 0 8px', paddingBottom: 5,
         borderBottom: '1px solid rgba(255,255,255,0.06)',
       }}>
         {title}
@@ -157,19 +157,19 @@ export default function ProfilePage({ onBack }) {
   };
 
   const s = {
-    overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 16 },
-    modal: { background: '#16162a', borderRadius: 20, width: '100%', maxWidth: 560, maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 64px rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.08)' },
-    header: { padding: '20px 24px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
-    title: { color: '#f1f5f9', fontWeight: 700, fontSize: '1.15rem', margin: 0 },
-    closeBtn: { background: 'rgba(255,255,255,0.08)', border: 'none', color: '#9ca3af', width: 32, height: 32, borderRadius: 8, cursor: 'pointer', fontSize: '1rem' },
-    tabs: { display: 'flex', gap: 4, padding: '16px 24px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' },
-    tab: (active) => ({ padding: '8px 16px', borderRadius: '8px 8px 0 0', border: 'none', background: active ? '#6366f1' : 'transparent', color: active ? '#fff' : '#9ca3af', cursor: 'pointer', fontSize: '0.88rem', fontWeight: active ? 600 : 400 }),
-    body: { padding: '24px', overflowY: 'auto', flex: 1 },
-    av: { width: 72, height: 72, borderRadius: '50%', background: avatar, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '1.8rem', flexShrink: 0, border: '3px solid rgba(255,255,255,0.1)' },
-    label: { color: '#9ca3af', fontSize: '0.82rem', marginBottom: 6, display: 'block' },
-    input: { width: '100%', background: '#1e1e3a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, color: '#f1f5f9', padding: '10px 14px', fontSize: '0.95rem', outline: 'none', boxSizing: 'border-box' },
-    textarea: { width: '100%', background: '#1e1e3a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, color: '#f1f5f9', padding: '10px 14px', fontSize: '0.95rem', outline: 'none', resize: 'vertical', minHeight: 80, boxSizing: 'border-box', fontFamily: 'inherit' },
-    btn: (color = '#6366f1') => ({ background: color, border: 'none', borderRadius: 10, color: '#fff', padding: '10px 20px', cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem', width: '100%', marginTop: 8 }),
+    overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 200, padding: 0 },
+    modal: { background: '#16162a', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: 480, maxHeight: '88vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 -8px 40px rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.08)' },
+    header: { padding: '14px 16px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
+    title: { color: '#f1f5f9', fontWeight: 700, fontSize: '1rem', margin: 0 },
+    closeBtn: { background: 'rgba(255,255,255,0.08)', border: 'none', color: '#9ca3af', width: 28, height: 28, borderRadius: 7, cursor: 'pointer', display:'flex', alignItems:'center', justifyContent:'center' },
+    tabs: { display: 'flex', gap: 4, padding: '10px 16px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' },
+    tab: (active) => ({ padding: '7px 14px', borderRadius: '8px 8px 0 0', border: 'none', background: active ? '#6366f1' : 'transparent', color: active ? '#fff' : '#9ca3af', cursor: 'pointer', fontSize: '0.83rem', fontWeight: active ? 600 : 400 }),
+    body: { padding: '14px 16px', overflowY: 'auto', flex: 1 },
+    av: { width: 48, height: 48, borderRadius: '50%', background: avatar, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '1.2rem', flexShrink: 0, border: '2px solid rgba(255,255,255,0.1)' },
+    label: { color: '#9ca3af', fontSize: '0.78rem', marginBottom: 4, display: 'block' },
+    input: { width: '100%', background: '#1e1e3a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#f1f5f9', padding: '8px 11px', fontSize: '0.88rem', outline: 'none', boxSizing: 'border-box' },
+    textarea: { width: '100%', background: '#1e1e3a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#f1f5f9', padding: '8px 11px', fontSize: '0.88rem', outline: 'none', resize: 'vertical', minHeight: 64, boxSizing: 'border-box', fontFamily: 'inherit' },
+    btn: (color = '#6366f1') => ({ background: color, border: 'none', borderRadius: 9, color: '#fff', padding: '9px 16px', cursor: 'pointer', fontWeight: 600, fontSize: '0.88rem', width: '100%', marginTop: 8 }),
     msg: (type) => ({ padding: '10px 14px', borderRadius: 8, fontSize: '0.88rem', background: type === 'success' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)', color: type === 'success' ? '#10b981' : '#ef4444', border: `1px solid ${type === 'success' ? '#10b981' : '#ef4444'}33`, marginTop: 10 }),
     colorGrid: { display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 6 },
     colorBtn: (color, selected) => ({ width: 32, height: 32, borderRadius: '50%', background: color, border: selected ? '3px solid #fff' : '3px solid transparent', cursor: 'pointer', outline: 'none', boxShadow: selected ? `0 0 0 2px ${color}` : 'none' }),
@@ -180,6 +180,10 @@ export default function ProfilePage({ onBack }) {
   return (
     <div style={s.overlay} onClick={(e) => e.target === e.currentTarget && onBack?.()}>
       <div style={s.modal}>
+        {/* Drag handle */}
+        <div style={{ display:'flex', justifyContent:'center', padding:'8px 0 0' }}>
+          <div style={{ width:36, height:4, borderRadius:2, background:'rgba(255,255,255,0.15)' }} />
+        </div>
 
         <div style={s.header}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -229,15 +233,15 @@ export default function ProfilePage({ onBack }) {
                     </div>
                     <div>
                       <label style={s.label}>Téléphone (optionnel)</label>
-                      <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+33 6 00 00 00 00" style={s.input} />
+                      <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+243 00 00 00 000" style={s.input} />
                     </div>
                   </div>
                   <div>
                     <label style={s.label}>Statut</label>
-                    <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginTop:4 }}>
+                    <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginTop:4 }}>
                       {STATUS_OPTIONS.map(opt => (
                         <button key={opt.value} onClick={() => setStatus(opt.value)}
-                          style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 14px', border:`2px solid ${status === opt.value ? opt.color : 'transparent'}`, borderRadius:8, background: status === opt.value ? opt.color+'22' : 'rgba(255,255,255,0.04)', color: status === opt.value ? opt.color : '#9ca3af', cursor:'pointer', fontSize:'0.83rem', fontWeight: status === opt.value ? 600 : 400 }}>
+                          style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 10px', border:`2px solid ${status === opt.value ? opt.color : 'transparent'}`, borderRadius:7, background: status === opt.value ? opt.color+'22' : 'rgba(255,255,255,0.04)', color: status === opt.value ? opt.color : '#9ca3af', cursor:'pointer', fontSize:'0.78rem', fontWeight: status === opt.value ? 600 : 400 }}>
                           <span style={{ width:8, height:8, borderRadius:'50%', background:opt.color, flexShrink:0 }} />
                           {opt.label}
                         </button>
@@ -260,13 +264,13 @@ export default function ProfilePage({ onBack }) {
               </Section>
 
               <Section title="Aperçu">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: '#1e1e3a', borderRadius: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: '#1e1e3a', borderRadius: 10 }}>
                   <div style={{ ...s.av, width: 44, height: 44, fontSize: '1.1rem' }}>{user?.username?.[0]?.toUpperCase()}</div>
                   <div>
                     <p style={{ color: '#f1f5f9', fontWeight: 600, margin: 0 }}>{user?.username}</p>
                     <p style={{ color: '#9ca3af', fontSize: '0.82rem', margin: '2px 0 0' }}>{bio || 'Pas de bio'}</p>
                   </div>
-                  {isAdmin && <span style={{ ...s.badge, marginLeft: 'auto' }}><IcCrown /> Admin</span>}
+                  {isAdmin && <span style={{ ...s.badge, marginLeft: 'auto', fontSize:'0.72rem', padding:'2px 8px' }}><IcCrown /> Admin</span>}
                 </div>
               </Section>
 
