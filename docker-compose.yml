@@ -63,6 +63,7 @@ services:
         # Le navigateur appelle le serveur via localhost:3001
         VITE_API_URL: http://localhost:3001/api
         VITE_WS_URL: ws://localhost:3001/ws
+        VITE_METERED_API_KEY: ${VITE_METERED_API_KEY}
     container_name: chat_client
     restart: unless-stopped
     ports:

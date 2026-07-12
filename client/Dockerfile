@@ -21,9 +21,11 @@ COPY . .
 # (car le navigateur accède au serveur via le port exposé 3001)
 ARG VITE_API_URL=http://localhost:3001/api
 ARG VITE_WS_URL=ws://localhost:3001/ws
+ARG VITE_METERED_API_KEY
 
 ENV VITE_API_URL=${VITE_API_URL}
 ENV VITE_WS_URL=${VITE_WS_URL}
+ENV VITE_METERED_API_KEY=${VITE_METERED_API_KEY}
 
 # Build de l'application
 RUN npm run build

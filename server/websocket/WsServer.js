@@ -6,27 +6,49 @@ const User = require('../models/User');
 const { handleAddReaction, handleRemoveReaction } = require('./reactionHandlers');
 const DirectMessage = require('../models/DirectMessage');
 
-const rooms = new Map(); // roomId → Set<ws>
-const clients = new Map(); // ws → { user, roomId }
-const onlineUsers = new Map(); // userId → Set<ws>
-const userSockets = new Map(); // userId → ws (pour signaling WebRTC 1-to-1)
+// ─── Tables de correspondance en mémoire ─────────────────────────────────────
+// Ces Maps gardent l'état des connexions actives en RAM (pas en BDD)
+// Elles se vident si le serveur redémarre
 
+// roomId (string) → Set de connexions WebSocket des membres du salon
+const rooms = new Map();
+
+// ws (connexion) → { user: {...}, roomId: string } — état de chaque connexion
+const clients = new Map();
+
+// userId (string) → Set<ws> — un utilisateur peut avoir plusieurs onglets ouverts
+const onlineUsers = new Map();
+
+// userId (string) → ws — utilisé pour le signaling WebRTC 1-to-1 (appels)
+// On garde seulement la dernière connexion de l'utilisateur pour les appels
+const userSockets = new Map();
+
+// ─── Fonctions utilitaires d'envoi ───────────────────────────────────────────
+
+// Envoie un événement à UNE connexion spécifique
+// Format JSON : { event: 'new_message', data: { ... } }
 const send = (ws, event, data) => {
   if (ws.readyState === 1) ws.send(JSON.stringify({ event, data }));
+  // readyState === 1 signifie WebSocket.OPEN — on vérifie avant d'envoyer
 };
 
+// Diffuse un événement à TOUS les membres d'un salon
+// excludeWs : optionnel, pour ne pas renvoyer à l'expéditeur
 const broadcast = (roomId, event, data, excludeWs = null) => {
   const members = rooms.get(roomId);
   if (!members) return;
   for (const ws of members) if (ws !== excludeWs) send(ws, event, data);
 };
 
+// Envoie à TOUS les onglets d'un utilisateur (il peut être connecté sur plusieurs appareils)
 const broadcastToUser = (userId, event, data) => {
   const sockets = onlineUsers.get(userId.toString());
   if (!sockets) return;
   for (const ws of sockets) send(ws, event, data);
 };
 
+// Diffuse la liste mise à jour des utilisateurs présents dans un salon
+// Appelé quand quelqu'un rejoint ou quitte
 const broadcastRoomUsers = (roomId) => {
   const members = rooms.get(roomId);
   if (!members) return;
@@ -35,10 +57,11 @@ const broadcastRoomUsers = (roomId) => {
       const { user } = clients.get(ws) || {};
       return user ? { _id: user._id, username: user.username, avatar: user.avatar } : null;
     })
-    .filter(Boolean);
+    .filter(Boolean); // Retire les null (connexions sans état)
   broadcast(roomId, 'room_users', { roomId, users });
 };
 
+// Diffuse la liste de tous les utilisateurs en ligne à tout le monde
 const broadcastOnlineUsers = () => {
   const online = [...onlineUsers.keys()];
   for (const [ws, state] of clients) {
@@ -46,6 +69,7 @@ const broadcastOnlineUsers = () => {
   }
 };
 
+// Met à jour le champ isOnline et lastSeen de l'utilisateur en base de données
 const updateUserOnlineStatus = async (userId, isOnline) => {
   try {
     await User.findByIdAndUpdate(userId, {
