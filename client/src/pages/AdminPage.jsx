@@ -65,8 +65,8 @@ const isMobile = () => window.innerWidth < 640;
 
 // ── Styles partagés ──────────────────────────────────────────────
 const S = {
-  overlay: { position:'fixed', inset:0, background:'rgba(0,0,0,0.72)', display:'flex', alignItems:'flex-end', justifyContent:'center', zIndex:300 },
-  panel:   { background:'#111827', width:'100%', maxWidth:1100, borderRadius:'20px 20px 0 0', display:'flex', flexDirection:'column', height:'92vh', overflow:'hidden', boxShadow:'0 -8px 40px rgba(0,0,0,0.7)', border:'1px solid rgba(255,255,255,0.07)', paddingTop:'env(safe-area-inset-top, 0px)' },
+  overlay: { position:'fixed', inset:0, background:'rgba(0,0,0,0.72)', display:'flex', alignItems:'flex-end', justifyContent:'center', zIndex:300, paddingTop:56 },
+  panel:   { background:'#111827', width:'100%', maxWidth:1100, borderRadius:'20px 20px 0 0', display:'flex', flexDirection:'column', flex:1, overflow:'hidden', boxShadow:'0 -8px 40px rgba(0,0,0,0.7)', border:'1px solid rgba(255,255,255,0.07)' },
   header:  { background:'#1f2937', padding:'12px 16px', display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:'1px solid rgba(255,255,255,0.07)', flexShrink:0 },
   sidebar: { width:180, background:'#1a1f2e', borderRight:'1px solid rgba(255,255,255,0.06)', flexShrink:0 },
   content: { flex:1, overflowY:'auto', padding:16 },
@@ -560,7 +560,7 @@ function TabRooms({ token }) {
                 <div key={room._id} style={{ background:'#1a1f2e', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12, padding:'12px 14px' }}>
                   {/* Ligne 1 : nom + badges */}
                   <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4, flexWrap:'wrap' }}>
-                    <span style={{ color:'#a5b4fc', fontWeight:700, fontSize:'0.9rem' }}>#{room.name}</span>
+                    <span style={{ color:'#a5b4fc', fontWeight:700, fontSize:'0.9rem' }}>{room.name}</span>
                     <span style={S.badge(room.type === 'private' ? '#f59e0b' : '#10b981')}>{room.type}</span>
                     <span style={{ color:'#6b7280', fontSize:'0.75rem', marginLeft:'auto' }}>{room.members?.length ?? 0} membres</span>
                   </div>
@@ -619,8 +619,8 @@ export default function AdminPage({ onClose }) {
     <div style={S.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div style={S.panel}>
 
-        {/* Drag handle + safe area top */}
-        <div style={{ display:'flex', justifyContent:'center', padding:'12px 0 6px', flexShrink:0 }}>
+        {/* Drag handle */}
+        <div style={{ display:'flex', justifyContent:'center', padding:'10px 0 6px', flexShrink:0 }}>
           <div style={{ width:36, height:4, borderRadius:2, background:'rgba(255,255,255,0.2)' }} />
         </div>
 
