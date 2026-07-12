@@ -186,7 +186,7 @@ export default function DMPage({ onClose, initialUser = null }) {
     iconBtn:  { background: 'rgba(255,255,255,0.07)', border: 'none', color: '#9ca3af', width: 30, height: 30, borderRadius: 7, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
     body:     { flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' },
     convItem: (active) => ({ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', cursor: 'pointer', background: active ? 'rgba(99,102,241,0.12)' : 'transparent', borderBottom: '1px solid rgba(255,255,255,0.04)' }),
-    msgBubble:(fromMe) => ({ maxWidth: '72%', padding: '8px 12px', borderRadius: fromMe ? '14px 14px 4px 14px' : '14px 14px 14px 4px', background: fromMe ? '#5865f2' : '#2b2d31', color: '#f1f5f9', fontSize: '0.88rem', lineHeight: 1.45, overflowWrap: 'break-word', wordBreak: 'normal' }),
+    msgBubble:(fromMe) => ({ display: 'inline-block', maxWidth: '72vw', padding: '8px 14px', borderRadius: fromMe ? '14px 14px 4px 14px' : '14px 14px 14px 4px', background: fromMe ? '#5865f2' : '#2b2d31', color: '#f1f5f9', fontSize: '0.92rem', lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'normal', overflowWrap: 'anywhere' }),
     input:    { flex: 1, background: '#383a40', border: 'none', borderRadius: 10, color: '#f1f5f9', padding: '10px 14px', fontSize: '0.9rem', outline: 'none' },
     sendBtn:  { background: '#5865f2', border: 'none', borderRadius: 10, color: '#fff', padding: '10px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   };
@@ -312,7 +312,7 @@ export default function DMPage({ onClose, initialUser = null }) {
                     )}
                     <div style={{ display: 'flex', justifyContent: fromMe ? 'flex-end' : 'flex-start', marginBottom: 2 }}>
                       {!fromMe && <div style={{ marginRight: 6, alignSelf: 'flex-end' }}><Avatar user={activeUser} size={24} /></div>}
-                      <div style={{ maxWidth: '75%' }}>
+                      <div>
                         {/* Image */}
                         {m.type === 'image' && att && (
                           <a href={att.secureUrl || att.url} target="_blank" rel="noreferrer">
