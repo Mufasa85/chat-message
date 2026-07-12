@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useChat } from '../context/ChatContext';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
@@ -16,6 +17,10 @@ const formatDate = (d) => {
 
 const STATUS_COLORS = { online: '#10b981', busy: '#f59e0b', invisible: '#6b7280', offline: '#6b7280' };
 
+const formatBytes = (b) => { if (!b) return ''; if (b < 1024) return `${b} o`; if (b < 1024**2) return `${(b/1024).toFixed(1)} Ko`; return `${(b/1024**2).toFixed(1)} Mo`; };
+const fileIcon = (f) => ({ pdf:'📄',doc:'📝',docx:'📝',xls:'📊',xlsx:'📊',zip:'📦',txt:'🗒️',mp3:'🎵',wav:'🎵',mp4:'🎬',mov:'🎬' }[f?.toLowerCase()] || '📎');
+const toDownloadUrl = (url, filename) => { if (!url || !url.includes('cloudinary.com')) return url; const safe = (filename||'fichier').replace(/[^a-zA-Z0-9._-]/g,'_'); return url.replace('/upload/',`/upload/fl_attachment:${safe}/`); };
+
 const Ic = {
   send:   () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>,
   back:   () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>,
@@ -23,6 +28,11 @@ const Ic = {
   search: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
   msg:    () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
   plus:   () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+  phone:  () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.4a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.69h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.09a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>,
+  video:  () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>,
+  attach: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>,
+  mic:    () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>,
+  stop:   () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>,
 };
 
 function Avatar({ user, size = 36 }) {
@@ -36,9 +46,10 @@ function Avatar({ user, size = 36 }) {
   );
 }
 
-export default function DMPage({ onClose, ws, initialUser = null }) {
+export default function DMPage({ onClose, initialUser = null }) {
   const { token, user: me } = useAuth();
-  const [view, setView] = useState(initialUser ? 'chat' : 'list'); // 'list' | 'new' | 'chat'
+  const { emit, webrtc } = useChat();
+  const [view, setView] = useState(initialUser ? 'chat' : 'list');
   const [conversations, setConversations] = useState([]);
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState('');
@@ -46,12 +57,18 @@ export default function DMPage({ onClose, ws, initialUser = null }) {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [recording, setRecording] = useState(false);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
+  const fileRef = useRef(null);
+  const mediaRef = useRef(null);
+  const chunksRef = useRef([]);
+  const activeUserRef = useRef(activeUser);
+  activeUserRef.current = activeUser;
 
   const authHeaders = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
 
-  // Charger les conversations
   const loadConversations = useCallback(async () => {
     try {
       const r = await fetch(`${API}/dm/conversations`, { headers: authHeaders });
@@ -59,7 +76,6 @@ export default function DMPage({ onClose, ws, initialUser = null }) {
     } catch {}
   }, [token]);
 
-  // Charger liste utilisateurs
   const loadUsers = useCallback(async () => {
     try {
       const r = await fetch(`${API}/dm/users/list`, { headers: authHeaders });
@@ -67,7 +83,6 @@ export default function DMPage({ onClose, ws, initialUser = null }) {
     } catch {}
   }, [token]);
 
-  // Charger messages d'une conversation
   const loadMessages = useCallback(async (userId) => {
     setLoading(true);
     try {
@@ -78,60 +93,85 @@ export default function DMPage({ onClose, ws, initialUser = null }) {
   }, [token]);
 
   useEffect(() => { loadConversations(); loadUsers(); }, [loadConversations, loadUsers]);
+  useEffect(() => { if (activeUser) loadMessages(activeUser._id); }, [activeUser]);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
+  // Écouter new_dm via un polling sur le contexte (emit expose le WS indirectement)
+  // On utilise une approche REST polling léger toutes les 3s si pas de WS direct
   useEffect(() => {
-    if (activeUser) loadMessages(activeUser._id);
-  }, [activeUser]);
+    if (!activeUser) return;
+    const interval = setInterval(() => loadMessages(activeUserRef.current?._id), 3000);
+    return () => clearInterval(interval);
+  }, [activeUser, loadMessages]);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  const openConv = (u) => { setActiveUser(u); setView('chat'); };
 
-  // Écouter les DM entrants via WebSocket
-  useEffect(() => {
-    if (!ws) return;
-    const origOnMessage = ws.onmessage;
-    ws.addEventListener('message', handleWsMessage);
-    return () => ws.removeEventListener('message', handleWsMessage);
-  }, [ws, activeUser]);
-
-  const handleWsMessage = useCallback((e) => {
-    try {
-      const { event, data } = JSON.parse(e.data);
-      if (event === 'new_dm') {
-        const fromMe = String(data.from._id) === String(me._id);
-        const otherId = fromMe ? String(data.to._id) : String(data.from._id);
-        if (activeUser && otherId === String(activeUser._id)) {
-          setMessages(prev => [...prev, data]);
-        }
-        loadConversations();
-      }
-    } catch {}
-  }, [activeUser, me._id]);
-
-  const openConv = (user) => {
-    setActiveUser(user);
-    setView('chat');
-  };
+  const addOptimistic = (msg) => setMessages(prev => [...prev, { _id: Date.now(), from: me, to: activeUser, createdAt: new Date().toISOString(), ...msg }]);
 
   const sendDM = () => {
     if (!text.trim() || !activeUser) return;
-    if (ws && ws.readyState === 1) {
-      ws.send(JSON.stringify({ event: 'send_dm', data: { toUserId: activeUser._id, content: text.trim() } }));
-      // Affichage optimiste
-      setMessages(prev => [...prev, {
-        _id: Date.now(),
-        from: me,
-        to: activeUser,
-        content: text.trim(),
-        type: 'text',
-        createdAt: new Date().toISOString(),
-      }]);
-      loadConversations();
-    }
+    emit('send_dm', { toUserId: activeUser._id, content: text.trim() });
+    addOptimistic({ content: text.trim(), type: 'text' });
+    loadConversations();
     setText('');
     inputRef.current?.focus();
   };
+
+  // Upload fichier
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !activeUser) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('roomId', 'dm'); // placeholder, le serveur l'ignorera pour les DM
+      const r = await fetch(`${API}/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd });
+      if (r.ok) {
+        const saved = await r.json();
+        const att = saved.attachment;
+        const msgType = saved.type || 'file';
+        emit('send_dm', { toUserId: activeUser._id, content: '', type: msgType, attachment: att });
+        addOptimistic({ content: '', type: msgType, attachment: att });
+        loadConversations();
+      }
+    } catch {}
+    setUploading(false);
+    e.target.value = '';
+  };
+
+  // Enregistrement vocal
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      chunksRef.current = [];
+      mr.ondataavailable = (e) => chunksRef.current.push(e.data);
+      mr.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        const fd = new FormData();
+        fd.append('file', blob, 'vocal.webm');
+        fd.append('roomId', 'dm');
+        setUploading(true);
+        try {
+          const r = await fetch(`${API}/upload`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd });
+          if (r.ok) {
+            const saved = await r.json();
+            emit('send_dm', { toUserId: activeUserRef.current._id, content: '', type: 'audio', attachment: saved.attachment });
+            addOptimistic({ content: '', type: 'audio', attachment: saved.attachment });
+            loadConversations();
+          }
+        } catch {}
+        setUploading(false);
+      };
+      mr.start();
+      mediaRef.current = mr;
+      setRecording(true);
+    } catch {}
+  };
+
+  const stopRecording = () => { mediaRef.current?.stop(); setRecording(false); };
 
   const filteredUsers = users.filter(u =>
     u.username.toLowerCase().includes(search.toLowerCase())
@@ -179,6 +219,10 @@ export default function DMPage({ onClose, ws, initialUser = null }) {
               <Ic.plus />
             </button>
           )}
+          {view === 'chat' && activeUser && (<>
+            <button style={s.iconBtn} title="Appel vocal" onClick={() => webrtc?.startCall({ userId: activeUser._id, username: activeUser.username, avatar: activeUser.avatar }, 'audio')}><Ic.phone /></button>
+            <button style={s.iconBtn} title="Appel vidéo" onClick={() => webrtc?.startCall({ userId: activeUser._id, username: activeUser.username, avatar: activeUser.avatar }, 'video')}><Ic.video /></button>
+          </>)}
           <button style={s.iconBtn} onClick={onClose}><Ic.close /></button>
         </div>
 
@@ -257,6 +301,7 @@ export default function DMPage({ onClose, ws, initialUser = null }) {
               {loading && <p style={{ color: '#6b7280', textAlign: 'center', fontSize: '0.82rem' }}>Chargement...</p>}
               {messages.map((m, i) => {
                 const fromMe = String(m.from?._id) === String(me._id);
+                const att = m.attachment;
                 const showDate = i === 0 || formatDate(m.createdAt) !== formatDate(messages[i - 1]?.createdAt);
                 return (
                   <div key={m._id}>
@@ -267,8 +312,33 @@ export default function DMPage({ onClose, ws, initialUser = null }) {
                     )}
                     <div style={{ display: 'flex', justifyContent: fromMe ? 'flex-end' : 'flex-start', marginBottom: 2 }}>
                       {!fromMe && <div style={{ marginRight: 6, alignSelf: 'flex-end' }}><Avatar user={activeUser} size={24} /></div>}
-                      <div>
-                        <div style={s.msgBubble(fromMe)}>{m.content}</div>
+                      <div style={{ maxWidth: '75%' }}>
+                        {/* Image */}
+                        {m.type === 'image' && att && (
+                          <a href={att.secureUrl || att.url} target="_blank" rel="noreferrer">
+                            <img src={att.secureUrl || att.url} alt={att.filename || 'image'} style={{ maxWidth: 220, borderRadius: 10, display: 'block' }} />
+                          </a>
+                        )}
+                        {/* Audio */}
+                        {m.type === 'audio' && att && (
+                          <div style={{ ...s.msgBubble(fromMe), padding: '6px 10px' }}>
+                            <p style={{ color: '#c4b5fd', fontSize: '0.72rem', margin: '0 0 4px' }}>🎤 Vocal</p>
+                            <audio src={att.secureUrl || att.url} controls style={{ width: 180, height: 28 }} />
+                          </div>
+                        )}
+                        {/* Fichier */}
+                        {m.type === 'file' && att && (
+                          <a href={toDownloadUrl(att.secureUrl || att.url, att.filename)} download={att.filename} target="_blank" rel="noreferrer"
+                            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: fromMe ? '#5865f2' : '#2b2d31', borderRadius: 10, textDecoration: 'none', color: '#f1f5f9', minWidth: 160 }}>
+                            <span style={{ fontSize: '1.5rem' }}>{fileIcon(att.format)}</span>
+                            <div><p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 600 }}>{att.filename}</p><p style={{ margin: 0, fontSize: '0.7rem', color: '#9ca3af' }}>{formatBytes(att.bytes)}</p></div>
+                            <span style={{ marginLeft: 'auto' }}>⬇</span>
+                          </a>
+                        )}
+                        {/* Texte */}
+                        {(m.type === 'text' || !m.type) && m.content && (
+                          <div style={s.msgBubble(fromMe)}>{m.content}</div>
+                        )}
                         <div style={{ color: '#4b5563', fontSize: '0.68rem', textAlign: fromMe ? 'right' : 'left', marginTop: 2, paddingRight: 4 }}>
                           {formatTime(m.createdAt)}
                         </div>
@@ -279,19 +349,37 @@ export default function DMPage({ onClose, ws, initialUser = null }) {
               })}
               <div ref={bottomRef} />
             </div>
-            {/* Input */}
-            <div style={{ padding: '10px 14px', display: 'flex', gap: 8, borderTop: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
-              <input
-                ref={inputRef}
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendDM(); } }}
-                placeholder={`Message à ${activeUser.username}...`}
-                style={s.input}
-              />
-              <button onClick={sendDM} disabled={!text.trim()} style={{ ...s.sendBtn, opacity: text.trim() ? 1 : 0.4 }}>
-                <Ic.send />
-              </button>
+            {/* Input toolbar */}
+            <div style={{ padding: '8px 12px', borderTop: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
+              {uploading && <p style={{ color: '#9ca3af', fontSize: '0.75rem', margin: '0 0 6px' }}>Envoi en cours...</p>}
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                {/* Attach */}
+                <button onClick={() => fileRef.current?.click()} title="Joindre un fichier"
+                  style={{ ...s.iconBtn, flexShrink: 0 }}>
+                  <Ic.attach />
+                </button>
+                <input ref={fileRef} type="file" style={{ display: 'none' }} onChange={handleFileChange}
+                  accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip" />
+                {/* Micro */}
+                <button
+                  onClick={recording ? stopRecording : startRecording}
+                  title={recording ? 'Arrêter' : 'Message vocal'}
+                  style={{ ...s.iconBtn, flexShrink: 0, color: recording ? '#ef4444' : '#9ca3af', background: recording ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.07)' }}>
+                  {recording ? <Ic.stop /> : <Ic.mic />}
+                </button>
+                <input
+                  ref={inputRef}
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendDM(); } }}
+                  placeholder={recording ? '🎤 Enregistrement...' : `Message à ${activeUser.username}...`}
+                  disabled={recording}
+                  style={{ ...s.input, opacity: recording ? 0.5 : 1 }}
+                />
+                <button onClick={sendDM} disabled={!text.trim() || recording} style={{ ...s.sendBtn, opacity: (text.trim() && !recording) ? 1 : 0.4, flexShrink: 0 }}>
+                  <Ic.send />
+                </button>
+              </div>
             </div>
           </>
         )}

@@ -10,7 +10,6 @@ router.post('/', authMiddleware, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu' });
     const { roomId } = req.body;
-    if (!roomId) return res.status(400).json({ error: 'roomId requis' });
 
     const f = req.file;
     const mime = f.mimetype || '';
@@ -19,17 +18,24 @@ router.post('/', authMiddleware, upload.single('file'), async (req, res) => {
     else if (mime.startsWith('video/')) msgType = 'video';
     else if (mime.startsWith('audio/')) msgType = 'audio';
 
+    const attachment = {
+      url: f.path, secureUrl: f.path, publicId: f.filename,
+      resourceType: getResourceType(mime),
+      format: f.originalname.split('.').pop(),
+      bytes: f.size, width: f.width, height: f.height,
+      filename: f.originalname,
+    };
+
+    // Mode DM : pas de roomId valide, on retourne juste l'attachment
+    if (!roomId || roomId === 'dm') {
+      return res.status(201).json({ type: msgType, attachment });
+    }
+
     const message = await Message.create({
       room: roomId, author: req.user._id,
       content: req.body.caption || '',
       type: msgType,
-      attachment: {
-        url: f.path, secureUrl: f.path, publicId: f.filename,
-        resourceType: getResourceType(mime),
-        format: f.originalname.split('.').pop(),
-        bytes: f.size, width: f.width, height: f.height,
-        filename: f.originalname,
-      },
+      attachment,
     });
     await message.populate('author', 'username avatar');
     res.status(201).json(message);
