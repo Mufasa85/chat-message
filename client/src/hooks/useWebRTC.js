@@ -1,20 +1,41 @@
 import { useState, useRef, useCallback } from 'react';
 
-const TURN_URL      = import.meta.env.VITE_TURN_URL;
-const TURN_USERNAME = import.meta.env.VITE_TURN_USERNAME;
-const TURN_PASSWORD = import.meta.env.VITE_TURN_PASSWORD;
+const METERED_API_KEY = import.meta.env.VITE_METERED_API_KEY;
+
+let cachedIceServers = null;
+
+async function fetchIceServers() {
+  if (cachedIceServers) return cachedIceServers;
+  try {
+    const res = await fetch(
+      `https://chat-message.metered.live/api/v1/turn/credentials?apiKey=${METERED_API_KEY}`
+    );
+    const servers = await res.json();
+    cachedIceServers = {
+      iceServers: servers,
+      iceCandidatePoolSize: 10,
+      bundlePolicy: 'max-bundle',
+      rtcpMuxPolicy: 'require',
+    };
+  } catch {
+    cachedIceServers = {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+      ],
+      iceCandidatePoolSize: 10,
+      bundlePolicy: 'max-bundle',
+      rtcpMuxPolicy: 'require',
+    };
+  }
+  return cachedIceServers;
+}
 
 export const ICE_SERVERS = {
-  iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'stun:stun2.l.google.com:19302' },
-    ...(TURN_URL ? [
-      { urls: `turn:${TURN_URL}`,               username: TURN_USERNAME, credential: TURN_PASSWORD },
-      { urls: `turn:${TURN_URL}?transport=tcp`, username: TURN_USERNAME, credential: TURN_PASSWORD },
-      { urls: `turns:${TURN_URL}?transport=tcp`,username: TURN_USERNAME, credential: TURN_PASSWORD },
-    ] : []),
-  ],
+  iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+  iceCandidatePoolSize: 10,
+  bundlePolicy: 'max-bundle',
+  rtcpMuxPolicy: 'require',
 };
 
 export const useWebRTC = ({ currentUser, emit }) => {
@@ -42,8 +63,19 @@ export const useWebRTC = ({ currentUser, emit }) => {
   const getLocalStream = useCallback(async (type) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: type === 'video',
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl:  true,
+          sampleRate:       48000,
+          channelCount:     1,
+        },
+        video: type === 'video' ? {
+          width:     { ideal: 640, max: 1280 },
+          height:    { ideal: 480, max: 720 },
+          frameRate: { ideal: 24,  max: 30 },
+          facingMode: 'user',
+        } : false,
       });
       localStreamRef.current = stream;
       return stream;
@@ -73,13 +105,45 @@ const attachRemoteStream = useCallback((stream) => {
   console.log('[WebRTC] attachRemoteStream: video=', !!remoteVideoRef.current, 'audio=', !!remoteAudioRef.current);
 }, []);
 
-  const createPeerConnection = useCallback((targetId) => {
-    const pc = new RTCPeerConnection(ICE_SERVERS);
+  const createPeerConnection = useCallback(async (targetId) => {
+    const iceConfig = await fetchIceServers();
+    const pc = new RTCPeerConnection(iceConfig);
 
     pc.onicecandidate = (e) => {
       if (e.candidate) {
         emit('ice_candidate', { targetUserId: targetId, candidate: e.candidate });
       }
+    };
+
+    pc.onconnectionstatechange = () => {
+      const state = pc.connectionState;
+      console.log('[WebRTC] connectionState:', state);
+      if (state === 'connected') {
+        setCallState('active');
+        // Limiter le bitrate pour éviter freezes sur réseau mobile
+        pc.getSenders().forEach(async (sender) => {
+          if (!sender.track) return;
+          const params = sender.getParameters();
+          if (!params.encodings || params.encodings.length === 0) {
+            params.encodings = [{}];
+          }
+          if (sender.track.kind === 'video') {
+            params.encodings[0].maxBitrate = 500_000; // 500 kbps
+            params.encodings[0].maxFramerate = 24;
+            params.encodings[0].scaleResolutionDownBy = 1;
+          } else if (sender.track.kind === 'audio') {
+            params.encodings[0].maxBitrate = 64_000; // 64 kbps
+          }
+          try { await sender.setParameters(params); } catch {}
+        });
+      }
+      if (state === 'failed' || state === 'disconnected') {
+        pc.restartIce();
+      }
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      console.log('[WebRTC] iceConnectionState:', pc.iceConnectionState);
     };
 
     pc.ontrack = (e) => {
@@ -139,7 +203,7 @@ const attachRemoteStream = useCallback((stream) => {
       attachLocalVideo(stream);
       targetUserIdRef.current = String(userId);
 
-      const pc = createPeerConnection(String(userId));
+      const pc = await createPeerConnection(String(userId));
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       console.log('[WebRTC] offer créé, envoi call_offer à', userId);
@@ -178,7 +242,7 @@ const attachRemoteStream = useCallback((stream) => {
       console.log('[WebRTC] stream local OK (callee), tracks:', stream.getTracks().map(t => t.kind));
       attachLocalVideo(stream);
 
-      const pc = createPeerConnection(String(callerId));
+      const pc = await createPeerConnection(String(callerId));
       await pc.setRemoteDescription(new RTCSessionDescription(sdp));
       console.log('[WebRTC] remoteDescription set, flush candidates...');
       await flushPendingCandidates();
