@@ -186,7 +186,7 @@ export default function DMPage({ onClose, initialUser = null }) {
     iconBtn:  { background: 'rgba(255,255,255,0.07)', border: 'none', color: '#9ca3af', width: 30, height: 30, borderRadius: 7, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
     body:     { flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' },
     convItem: (active) => ({ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', cursor: 'pointer', background: active ? 'rgba(99,102,241,0.12)' : 'transparent', borderBottom: '1px solid rgba(255,255,255,0.04)' }),
-    msgBubble:(fromMe) => ({ maxWidth: '72%', padding: '8px 12px', borderRadius: fromMe ? '14px 14px 4px 14px' : '14px 14px 14px 4px', background: fromMe ? '#5865f2' : '#2b2d31', color: '#f1f5f9', fontSize: '0.88rem', lineHeight: 1.45, wordBreak: 'break-word' }),
+    msgBubble:(fromMe) => ({ maxWidth: '72%', padding: '8px 12px', borderRadius: fromMe ? '14px 14px 4px 14px' : '14px 14px 14px 4px', background: fromMe ? '#5865f2' : '#2b2d31', color: '#f1f5f9', fontSize: '0.88rem', lineHeight: 1.45, overflowWrap: 'break-word', wordBreak: 'normal' }),
     input:    { flex: 1, background: '#383a40', border: 'none', borderRadius: 10, color: '#f1f5f9', padding: '10px 14px', fontSize: '0.9rem', outline: 'none' },
     sendBtn:  { background: '#5865f2', border: 'none', borderRadius: 10, color: '#fff', padding: '10px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   };
@@ -321,9 +321,14 @@ export default function DMPage({ onClose, initialUser = null }) {
                         )}
                         {/* Audio */}
                         {m.type === 'audio' && att && (
-                          <div style={{ ...s.msgBubble(fromMe), padding: '6px 10px' }}>
-                            <p style={{ color: '#c4b5fd', fontSize: '0.72rem', margin: '0 0 4px' }}>🎤 Vocal</p>
-                            <audio src={att.secureUrl || att.url} controls style={{ width: 180, height: 28 }} />
+                          <div style={{ ...s.msgBubble(fromMe), padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8, minWidth: 220, maxWidth: 300 }}>
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.65 }}>
+                              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                              <line x1="12" y1="19" x2="12" y2="23"/>
+                              <line x1="8" y1="23" x2="16" y2="23"/>
+                            </svg>
+                            <audio src={att.secureUrl || att.url} controls style={{ flex: 1, height: 32, minWidth: 0 }} />
                           </div>
                         )}
                         {/* Fichier */}

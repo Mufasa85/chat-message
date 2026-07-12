@@ -105,7 +105,7 @@ export default function MessageBubble({ msg, isOwn, onReply }) {
   const s = {
     row:    { display:'flex', alignItems:'flex-end', gap:8, position:'relative' },
     av:     { width:34, height:34, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontWeight:700, fontSize:'0.9rem', flexShrink:0 },
-    bubble: { padding:'12px 16px', borderRadius:14, fontSize:'1rem', lineHeight:1.5, overflowWrap:'break-word', maxWidth:360 },
+    bubble: { padding:'12px 16px', borderRadius:14, fontSize:'1rem', lineHeight:1.5, overflowWrap:'break-word', wordBreak:'normal', maxWidth:360 },
     own:    { background:'#6366f1', color:'#fff', borderBottomRightRadius:4 },
     other:  { background:'#2d2d4e', color:'#e2e8f0', borderBottomLeftRadius:4 },
     media:  { padding:4, borderRadius:14 },
@@ -156,16 +156,14 @@ export default function MessageBubble({ msg, isOwn, onReply }) {
     );
     if (msg.type === 'video') return <video src={att?.secureUrl||att?.url} controls style={s.video} />;
     if (msg.type === 'audio') return (
-      <div style={{ display:'flex', alignItems:'center', gap:10, minWidth:220 }}>
-        <div style={{ width:36, height:36, borderRadius:'50%', background:'rgba(99,102,241,0.25)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
-          </svg>
-        </div>
-        <div style={{ flex:1 }}>
-          <p style={{ color:'#c4b5fd', fontSize:'0.78rem', fontWeight:600, margin:'0 0 4px' }}>Message vocal</p>
-          <audio src={att?.secureUrl||att?.url} controls style={{ width:'100%', maxWidth:200, height:28 }} />
-        </div>
+      <div style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 12px', minWidth:240, maxWidth:320 }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0, opacity:0.65 }}>
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="23"/>
+          <line x1="8" y1="23" x2="16" y2="23"/>
+        </svg>
+        <audio src={att?.secureUrl||att?.url} controls style={{ flex:1, height:32, minWidth:0 }} />
       </div>
     );
     if (msg.type === 'file') return (
