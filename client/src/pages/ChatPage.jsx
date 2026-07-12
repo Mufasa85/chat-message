@@ -341,6 +341,35 @@ export default function ChatPage() {
               </button>
             </div>
             <div className="p-2 flex-1 overflow-y-auto">
+
+              {/* Mon espace — mobile */}
+              <div className="mb-4">
+                <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider px-1">Mon espace</span>
+                <div className="mt-1.5 space-y-0.5">
+                  <button
+                    onClick={() => { setShowProfile(true); setMobileSidebarOpen(false); }}
+                    className="w-full flex items-center gap-2.5 px-2 py-2 rounded-md text-gray-400 hover:bg-[#35373c] hover:text-white transition-colors text-sm"
+                  >
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    <span>Mon profil</span>
+                  </button>
+                  {user?.role === 'admin' && (
+                    <button
+                      onClick={() => { setShowAdmin(true); setMobileSidebarOpen(false); }}
+                      className="w-full flex items-center gap-2.5 px-2 py-2 rounded-md text-indigo-400 hover:bg-indigo-500/10 hover:text-indigo-300 transition-colors text-sm"
+                    >
+                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+                      </svg>
+                      <span>Administration</span>
+                    </button>
+                  )}
+                </div>
+                <div className="mt-3 h-px bg-white/5 mx-1" />
+              </div>
+
               <div className="flex items-center justify-between px-1 mb-1.5">
                 <span className="text-[10px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wider">Salons texte</span>
                 <button onClick={() => { setShowCreate(true); setMobileSidebarOpen(false); }} className="text-gray-500 hover:text-white transition-colors">
@@ -426,6 +455,35 @@ export default function ChatPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-2 sm:p-3">
+
+          {/* Mon espace */}
+          <div className="mb-4">
+            <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider px-1">Mon espace</span>
+            <div className="mt-1.5 space-y-0.5">
+              <button
+                onClick={() => setShowProfile(true)}
+                className="w-full flex items-center gap-2.5 px-2 py-2 rounded-md text-gray-400 hover:bg-[#35373c] hover:text-white transition-colors text-sm"
+              >
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                </svg>
+                <span>Mon profil</span>
+              </button>
+              {user?.role === 'admin' && (
+                <button
+                  onClick={() => setShowAdmin(true)}
+                  className="w-full flex items-center gap-2.5 px-2 py-2 rounded-md text-indigo-400 hover:bg-indigo-500/10 hover:text-indigo-300 transition-colors text-sm"
+                >
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+                  </svg>
+                  <span>Administration</span>
+                </button>
+              )}
+            </div>
+            <div className="mt-3 h-px bg-white/5 mx-1" />
+          </div>
+
           <div className="mb-3 sm:mb-4">
             <div className="flex items-center justify-between px-1 mb-1.5 sm:mb-2">
               <span className="text-[10px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wider">Salons texte</span>
