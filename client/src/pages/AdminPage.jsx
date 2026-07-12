@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
@@ -60,14 +60,18 @@ function Modal({ title, onClose, children, width = 500 }) {
   );
 }
 
+// ── Détection mobile ─────────────────────────────────────────────
+const isMobile = () => window.innerWidth < 640;
+
 // ── Styles partagés ──────────────────────────────────────────────
 const S = {
-  overlay: { position:'fixed', inset:0, background:'rgba(0,0,0,0.72)', display:'flex', zIndex:300 },
-  panel:   { background:'#111827', width:'100%', maxWidth:1100, margin:'auto', borderRadius:20, display:'flex', flexDirection:'column', maxHeight:'95vh', overflow:'hidden', boxShadow:'0 32px 80px rgba(0,0,0,0.7)', border:'1px solid rgba(255,255,255,0.07)' },
-  header:  { background:'#1f2937', padding:'16px 24px', display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:'1px solid rgba(255,255,255,0.07)', flexShrink:0 },
-  sidebar: { width:200, background:'#1a1f2e', borderRight:'1px solid rgba(255,255,255,0.06)', flexShrink:0 },
-  content: { flex:1, overflowY:'auto', padding:24 },
-  navBtn:  (active) => ({ display:'flex', alignItems:'center', gap:10, width:'100%', padding:'10px 16px', border:'none', borderRadius:8, cursor:'pointer', fontSize:'0.88rem', fontWeight: active ? 600 : 400, background: active ? 'rgba(99,102,241,0.2)' : 'transparent', color: active ? '#a5b4fc' : '#9ca3af', marginBottom:2 }),
+  overlay: { position:'fixed', inset:0, background:'rgba(0,0,0,0.72)', display:'flex', alignItems:'flex-end', justifyContent:'center', zIndex:300 },
+  panel:   { background:'#111827', width:'100%', maxWidth:1100, borderRadius:'20px 20px 0 0', display:'flex', flexDirection:'column', height:'92vh', overflow:'hidden', boxShadow:'0 -8px 40px rgba(0,0,0,0.7)', border:'1px solid rgba(255,255,255,0.07)' },
+  header:  { background:'#1f2937', padding:'12px 16px', display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:'1px solid rgba(255,255,255,0.07)', flexShrink:0 },
+  sidebar: { width:180, background:'#1a1f2e', borderRight:'1px solid rgba(255,255,255,0.06)', flexShrink:0 },
+  content: { flex:1, overflowY:'auto', padding:16 },
+  navBtn:  (active) => ({ display:'flex', alignItems:'center', gap:10, width:'100%', padding:'10px 14px', border:'none', borderRadius:8, cursor:'pointer', fontSize:'0.86rem', fontWeight: active ? 600 : 400, background: active ? 'rgba(99,102,241,0.2)' : 'transparent', color: active ? '#a5b4fc' : '#9ca3af', marginBottom:2 }),
+  mobileNavBtn: (active) => ({ display:'flex', flexDirection:'column', alignItems:'center', gap:3, flex:1, padding:'8px 4px', border:'none', background:'transparent', color: active ? '#a5b4fc' : '#6b7280', cursor:'pointer', fontSize:'0.65rem', fontWeight: active ? 600 : 400 }),
   input:   { width:'100%', background:'#1e2538', border:'1px solid rgba(255,255,255,0.1)', borderRadius:9, color:'#f1f5f9', padding:'9px 13px', fontSize:'0.9rem', outline:'none', boxSizing:'border-box' },
   label:   { color:'#9ca3af', fontSize:'0.8rem', display:'block', marginBottom:5 },
   btn:     (c='#6366f1',sm=false) => ({ background:c, border:'none', borderRadius:8, color:'#fff', padding: sm ? '6px 12px' : '9px 18px', cursor:'pointer', fontWeight:600, fontSize: sm ? '0.8rem' : '0.88rem', display:'inline-flex', alignItems:'center', gap:6 }),
@@ -120,7 +124,7 @@ function TabStats({ token }) {
         <h2 style={{ color:'#f1f5f9', fontWeight:700, fontSize:'1.1rem', margin:0 }}>Vue d'ensemble</h2>
         <button onClick={load} style={S.btn('#374151', true)}><Ic.refresh /> Rafraîchir</button>
       </div>
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))', gap:14 }}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(140px, 1fr))', gap:10 }}>
         {cards.map(({ label, value, color, icon }) => (
           <div key={label} style={S.statCard(color)}>
             <div style={S.iconBox(color)}><span style={{ color }}>{icon}</span></div>
@@ -355,65 +359,44 @@ function TabUsers({ token }) {
 
       <Msg msg={actionMsg} />
 
-      {/* Table */}
+      {/* Liste */}
       {loading ? <p style={{ color:'#6b7280', textAlign:'center', padding:30 }}>Chargement...</p> : (
-        <div style={{ overflowX:'auto' }}>
-          <table style={S.table}>
-            <thead>
-              <tr>
-                {['Utilisateur','Email','Rôle','Statut','Inscription','Actions'].map(h => (
-                  <th key={h} style={S.th}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {users.length === 0 && (
-                <tr><td colSpan={6} style={{ ...S.td, textAlign:'center', color:'#4b5563', padding:24 }}>Aucun utilisateur</td></tr>
-              )}
+        users.length === 0
+          ? <p style={{ color:'#4b5563', textAlign:'center', padding:24 }}>Aucun utilisateur</p>
+          : <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
               {users.map(u => (
-                <tr key={u._id} style={{ opacity: u.isDisabled || u.isBanned ? 0.55 : 1 }}>
-                  <td style={S.td}>
-                    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                      <div style={{ ...S.avatar(u.avatar), position:'relative' }}>
-                        {u.profilePicture
-                          ? <img src={u.profilePicture} alt="" style={{ width:'100%', height:'100%', borderRadius:'50%', objectFit:'cover' }} />
-                          : u.username[0].toUpperCase()}
-                        <span style={{ position:'absolute', bottom:0, right:0, width:8, height:8, borderRadius:'50%', background: STATUS_COLORS[u.status]||'#6b7280', border:'1.5px solid #111827' }} />
+                <div key={u._id} style={{ background:'#1a1f2e', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12, padding:'12px 14px', opacity: u.isDisabled || u.isBanned ? 0.6 : 1 }}>
+                  {/* Ligne 1 : avatar + infos + badges */}
+                  <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8 }}>
+                    <div style={{ ...S.avatar(u.avatar), position:'relative', flexShrink:0 }}>
+                      {u.profilePicture
+                        ? <img src={u.profilePicture} alt="" style={{ width:'100%', height:'100%', borderRadius:'50%', objectFit:'cover' }} />
+                        : u.username[0].toUpperCase()}
+                      <span style={{ position:'absolute', bottom:0, right:0, width:8, height:8, borderRadius:'50%', background: STATUS_COLORS[u.status]||'#6b7280', border:'1.5px solid #1a1f2e' }} />
+                    </div>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontWeight:600, color:'#f1f5f9', fontSize:'0.87rem', display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
+                        {u.username}
+                        <span style={S.badge(u.role === 'admin' ? '#8b5cf6' : '#6366f1')}>{u.role === 'admin' ? 'Admin' : 'User'}</span>
+                        {u.isBanned   && <span style={S.badge('#ef4444')}>Banni</span>}
+                        {u.isDisabled && <span style={S.badge('#f97316')}>Désactivé</span>}
                       </div>
-                      <div>
-                        <div style={{ fontWeight:600, color:'#f1f5f9', fontSize:'0.87rem' }}>{u.username}</div>
-                        {u.fullName && <div style={{ color:'#6b7280', fontSize:'0.75rem' }}>{u.fullName}</div>}
+                      <div style={{ color:'#6b7280', fontSize:'0.75rem', marginTop:2 }}>
+                        {u.email || u.fullName || formatDate(u.createdAt)}
                       </div>
                     </div>
-                  </td>
-                  <td style={S.td}>{u.email || <span style={{ color:'#4b5563' }}>—</span>}</td>
-                  <td style={S.td}>
-                    <span style={S.badge(u.role === 'admin' ? '#8b5cf6' : '#6366f1')}>
-                      {u.role === 'admin' ? 'Admin' : 'User'}
-                    </span>
-                  </td>
-                  <td style={S.td}>
-                    {u.isBanned    && <span style={S.badge('#ef4444')}>Banni</span>}
-                    {u.isDisabled  && <span style={S.badge('#f97316')}>Désactivé</span>}
-                    {!u.isBanned && !u.isDisabled && (
-                      <span style={S.badge(STATUS_COLORS[u.status]||'#6b7280')}>{STATUS_LABELS[u.status]||'Hors ligne'}</span>
-                    )}
-                  </td>
-                  <td style={S.td}>{formatDate(u.createdAt)}</td>
-                  <td style={S.td}>
-                    <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
-                      <button title="Modifier"         onClick={() => setEditUser(u)}  style={{ ...S.btn('#374151',true), padding:'5px 8px' }}><Ic.edit /></button>
-                      <button title="Reset MDP"        onClick={() => setResetUser(u)} style={{ ...S.btn('#374151',true), padding:'5px 8px' }}><Ic.key /></button>
-                      <button title={u.isDisabled ? 'Réactiver' : 'Désactiver'} onClick={() => toggleDisable(u)} style={{ ...S.btn(u.isDisabled ? '#10b981' : '#f97316', true), padding:'5px 8px' }}><Ic.disable /></button>
-                      <button title={u.isBanned ? 'Débannir' : 'Bannir'}        onClick={() => toggleBan(u)}     style={{ ...S.btn(u.isBanned ? '#10b981' : '#ef4444', true), padding:'5px 8px' }}><Ic.ban /></button>
-                      <button title="Supprimer"        onClick={() => setConfirmDel(u)} style={{ ...S.btn('#7f1d1d',true), padding:'5px 8px' }}><Ic.trash /></button>
-                    </div>
-                  </td>
-                </tr>
+                  </div>
+                  {/* Ligne 2 : actions */}
+                  <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                    <button title="Modifier"   onClick={() => setEditUser(u)}   style={{ ...S.btn('#374151',true), padding:'5px 10px' }}><Ic.edit /> <span style={{ fontSize:'0.75rem' }}>Modifier</span></button>
+                    <button title="Reset MDP"  onClick={() => setResetUser(u)}  style={{ ...S.btn('#374151',true), padding:'5px 10px' }}><Ic.key /></button>
+                    <button title={u.isDisabled ? 'Réactiver' : 'Désactiver'} onClick={() => toggleDisable(u)} style={{ ...S.btn(u.isDisabled ? '#10b981' : '#f97316', true), padding:'5px 10px' }}><Ic.disable /></button>
+                    <button title={u.isBanned  ? 'Débannir'  : 'Bannir'}      onClick={() => toggleBan(u)}     style={{ ...S.btn(u.isBanned  ? '#10b981' : '#ef4444', true), padding:'5px 10px' }}><Ic.ban /></button>
+                    <button title="Supprimer"  onClick={() => setConfirmDel(u)} style={{ ...S.btn('#7f1d1d',true), padding:'5px 10px' }}><Ic.trash /></button>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </div>
       )}
 
       {/* Modals */}
@@ -570,37 +553,32 @@ function TabRooms({ token }) {
       </div>
       <Msg msg={actionMsg} />
       {loading ? <p style={{ color:'#6b7280', textAlign:'center', padding:30 }}>Chargement...</p> : (
-        <div style={{ overflowX:'auto' }}>
-          <table style={S.table}>
-            <thead>
-              <tr>{['Nom','Description','Créé par','Membres','Créé le','Actions'].map(h => <th key={h} style={S.th}>{h}</th>)}</tr>
-            </thead>
-            <tbody>
-              {rooms.length === 0 && <tr><td colSpan={6} style={{ ...S.td, textAlign:'center', color:'#4b5563', padding:24 }}>Aucun salon</td></tr>}
+        rooms.length === 0
+          ? <p style={{ color:'#4b5563', textAlign:'center', padding:24 }}>Aucun salon</p>
+          : <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
               {rooms.map(room => (
-                <tr key={room._id}>
-                  <td style={S.td}>
-                    <span style={{ color:'#a5b4fc', fontWeight:600 }}>#{room.name}</span>
-                    <span style={{ ...S.badge(room.type === 'private' ? '#f59e0b' : '#10b981'), marginLeft:6 }}>{room.type}</span>
-                  </td>
-                  <td style={{ ...S.td, maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                    {room.description || <span style={{ color:'#4b5563' }}>—</span>}
-                  </td>
-                  <td style={S.td}>{room.createdBy?.username || '—'}</td>
-                  <td style={S.td}>{room.members?.length ?? 0}</td>
-                  <td style={S.td}>{formatDate(room.createdAt)}</td>
-                  <td style={S.td}>
-                    <div style={{ display:'flex', gap:4 }}>
-                      <button title="Modifier"  onClick={() => setEditRoom(room)}  style={{ ...S.btn('#374151',true), padding:'5px 8px' }}><Ic.edit /></button>
-                      <button title="Messages"  onClick={() => setMsgsRoom(room)}  style={{ ...S.btn('#374151',true), padding:'5px 8px' }}><Ic.msg /></button>
-                      <button title="Supprimer" onClick={() => setConfirmDel(room)} style={{ ...S.btn('#7f1d1d',true), padding:'5px 8px' }}><Ic.trash /></button>
-                    </div>
-                  </td>
-                </tr>
+                <div key={room._id} style={{ background:'#1a1f2e', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12, padding:'12px 14px' }}>
+                  {/* Ligne 1 : nom + badges */}
+                  <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4, flexWrap:'wrap' }}>
+                    <span style={{ color:'#a5b4fc', fontWeight:700, fontSize:'0.9rem' }}>#{room.name}</span>
+                    <span style={S.badge(room.type === 'private' ? '#f59e0b' : '#10b981')}>{room.type}</span>
+                    <span style={{ color:'#6b7280', fontSize:'0.75rem', marginLeft:'auto' }}>{room.members?.length ?? 0} membres</span>
+                  </div>
+                  {/* Ligne 2 : description + créateur */}
+                  <div style={{ color:'#6b7280', fontSize:'0.78rem', marginBottom:8 }}>
+                    {room.description || <em>Pas de description</em>}
+                    {room.createdBy?.username && <span style={{ marginLeft:8, color:'#4b5563' }}>· par {room.createdBy.username}</span>}
+                    <span style={{ marginLeft:8, color:'#374151' }}>· {formatDate(room.createdAt)}</span>
+                  </div>
+                  {/* Actions */}
+                  <div style={{ display:'flex', gap:6 }}>
+                    <button title="Modifier"  onClick={() => setEditRoom(room)}   style={{ ...S.btn('#374151',true), padding:'5px 10px' }}><Ic.edit /> <span style={{ fontSize:'0.75rem' }}>Modifier</span></button>
+                    <button title="Messages"  onClick={() => setMsgsRoom(room)}   style={{ ...S.btn('#374151',true), padding:'5px 10px' }}><Ic.msg /> <span style={{ fontSize:'0.75rem' }}>Messages</span></button>
+                    <button title="Supprimer" onClick={() => setConfirmDel(room)} style={{ ...S.btn('#7f1d1d',true), padding:'5px 10px' }}><Ic.trash /></button>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </div>
       )}
       {editRoom   && <ModalEditRoom token={token} room={editRoom} onClose={() => setEditRoom(null)} onSaved={(r) => { setRooms(p => p.map(x => x._id === r._id ? r : x)); setEditRoom(null); flash('success','Salon mis à jour'); }} />}
       {msgsRoom   && <ModalRoomMessages token={token} room={msgsRoom} onClose={() => setMsgsRoom(null)} />}
@@ -629,38 +607,54 @@ const TABS = [
 export default function AdminPage({ onClose }) {
   const { token } = useAuth();
   const [tab, setTab] = useState('stats');
+  const [mobile, setMobile] = useState(isMobile());
+
+  useEffect(() => {
+    const handler = () => setMobile(isMobile());
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
 
   return (
     <div style={S.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div style={S.panel}>
+
+        {/* Drag handle */}
+        <div style={{ display:'flex', justifyContent:'center', paddingTop:8, flexShrink:0 }}>
+          <div style={{ width:36, height:4, borderRadius:2, background:'rgba(255,255,255,0.15)' }} />
+        </div>
+
         {/* Header */}
         <div style={S.header}>
-          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-            <div style={{ width:32, height:32, borderRadius:8, background:'rgba(99,102,241,0.2)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <div style={{ width:28, height:28, borderRadius:7, background:'rgba(99,102,241,0.2)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
               <Ic.stats />
             </div>
             <div>
-              <h1 style={{ color:'#f1f5f9', fontWeight:700, fontSize:'1.05rem', margin:0 }}>Tableau de bord Admin</h1>
-              <p style={{ color:'#6b7280', fontSize:'0.75rem', margin:0 }}>Gestion complète de l'application</p>
+              <h1 style={{ color:'#f1f5f9', fontWeight:700, fontSize:'0.95rem', margin:0 }}>Tableau de bord Admin</h1>
+              {!mobile && <p style={{ color:'#6b7280', fontSize:'0.72rem', margin:0 }}>Gestion complète de l'application</p>}
             </div>
           </div>
-          <button onClick={onClose} style={{ background:'rgba(255,255,255,0.07)', border:'none', color:'#9ca3af', width:32, height:32, borderRadius:8, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <button onClick={onClose} style={{ background:'rgba(255,255,255,0.07)', border:'none', color:'#9ca3af', width:30, height:30, borderRadius:8, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
             <Ic.close />
           </button>
         </div>
 
         {/* Body */}
-        <div style={{ display:'flex', flex:1, overflow:'hidden' }}>
-          {/* Sidebar nav */}
-          <div style={S.sidebar}>
-            <div style={{ padding:12 }}>
-              {TABS.map(t => (
-                <button key={t.id} onClick={() => setTab(t.id)} style={S.navBtn(tab === t.id)}>
-                  {t.icon} {t.label}
-                </button>
-              ))}
+        <div style={{ display:'flex', flex:1, overflow:'hidden', flexDirection: mobile ? 'column' : 'row' }}>
+
+          {/* Sidebar — desktop uniquement */}
+          {!mobile && (
+            <div style={S.sidebar}>
+              <div style={{ padding:10 }}>
+                {TABS.map(t => (
+                  <button key={t.id} onClick={() => setTab(t.id)} style={S.navBtn(tab === t.id)}>
+                    {t.icon} {t.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Content */}
           <div style={S.content}>
@@ -668,6 +662,18 @@ export default function AdminPage({ onClose }) {
             {tab === 'users' && <TabUsers token={token} />}
             {tab === 'rooms' && <TabRooms token={token} />}
           </div>
+
+          {/* Nav bottom — mobile uniquement */}
+          {mobile && (
+            <div style={{ display:'flex', background:'#1a1f2e', borderTop:'1px solid rgba(255,255,255,0.07)', flexShrink:0 }}>
+              {TABS.map(t => (
+                <button key={t.id} onClick={() => setTab(t.id)} style={S.mobileNavBtn(tab === t.id)}>
+                  <span style={{ opacity: tab === t.id ? 1 : 0.6 }}>{t.icon}</span>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
