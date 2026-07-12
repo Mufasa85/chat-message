@@ -377,7 +377,7 @@ export default function DMPage({ onClose, initialUser = null }) {
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendDM(); } }}
-                  placeholder={recording ? '🎤 Enregistrement...' : `Message à ${activeUser.username}...`}
+                  placeholder={recording ? 'Enregistrement...' : `Message à ${activeUser.username}...`}
                   disabled={recording}
                   style={{ ...s.input, opacity: recording ? 0.5 : 1 }}
                 />
