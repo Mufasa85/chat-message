@@ -32,6 +32,40 @@ const userSchema = new mongoose.Schema({
     default: '',
     maxlength: 150
   },
+  fullName: {
+    type: String,
+    default: '',
+    maxlength: 80,
+    trim: true
+  },
+  email: {
+    type: String,
+    default: '',
+    trim: true,
+    lowercase: true,
+  },
+  phone: {
+    type: String,
+    default: '',
+    trim: true,
+  },
+  status: {
+    type: String,
+    enum: ['online', 'busy', 'invisible', 'offline'],
+    default: 'offline',
+  },
+  profilePicture: {
+    type: String,
+    default: '',
+  },
+  isDisabled: {
+    type: Boolean,
+    default: false,
+  },
+  isBanned: {
+    type: Boolean,
+    default: false,
+  },
   isOnline: {
     type: Boolean,
     default: false

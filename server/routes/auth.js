@@ -59,11 +59,19 @@ router.get('/me', authMiddleware, (req, res) => res.json(req.user));
 router.put('/profile', authMiddleware, [
   body('bio').optional().trim().isLength({ max: 150 }).withMessage('Bio max 150 caractères'),
   body('avatar').optional().isHexColor().withMessage('Couleur hex invalide'),
+  body('fullName').optional().trim().isLength({ max: 80 }).withMessage('Nom complet max 80 caractères'),
+  body('email').optional().trim().isEmail().withMessage('Email invalide').normalizeEmail(),
+  body('phone').optional().trim(),
+  body('status').optional().isIn(['online','busy','invisible','offline']).withMessage('Statut invalide'),
 ], validate, async (req, res) => {
   try {
-    const { bio, avatar } = req.body;
-    if (bio !== undefined) req.user.bio = bio;
-    if (avatar !== undefined) req.user.avatar = avatar;
+    const { bio, avatar, fullName, email, phone, status } = req.body;
+    if (bio      !== undefined) req.user.bio      = bio;
+    if (avatar   !== undefined) req.user.avatar   = avatar;
+    if (fullName !== undefined) req.user.fullName = fullName;
+    if (email    !== undefined) req.user.email    = email;
+    if (phone    !== undefined) req.user.phone    = phone;
+    if (status   !== undefined) req.user.status   = status;
     await req.user.save();
     res.json(req.user);
   } catch (err) { res.status(500).json({ error: err.message }); }

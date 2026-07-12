@@ -62,10 +62,21 @@ function Section({ title, children }) {
   );
 }
 
+const STATUS_OPTIONS = [
+  { value:'online',    label:'En ligne',   color:'#10b981' },
+  { value:'busy',      label:'Occupé',     color:'#f59e0b' },
+  { value:'invisible', label:'Invisible',  color:'#6b7280' },
+  { value:'offline',   label:'Hors ligne', color:'#6b7280' },
+];
+
 export default function ProfilePage({ onBack }) {
   const { user, token, setUser } = useAuth();
 
   const [bio, setBio] = useState(user?.bio || '');
+  const [fullName, setFullName] = useState(user?.fullName || '');
+  const [email, setEmail] = useState(user?.email || '');
+  const [phone, setPhone] = useState(user?.phone || '');
+  const [status, setStatus] = useState(user?.status || 'offline');
   const [avatar, setAvatar] = useState(user?.avatar || '#6366f1');
   const [saving, setSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState(null);
@@ -106,7 +117,7 @@ export default function ProfilePage({ onBack }) {
       const res = await fetch(`${API}/auth/profile`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bio: bio.trim(), avatar }),
+        body: JSON.stringify({ bio: bio.trim(), avatar, fullName: fullName.trim(), email: email.trim(), phone: phone.trim(), status }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -201,14 +212,42 @@ export default function ProfilePage({ onBack }) {
           {tab === 'profile' && (
             <>
               <Section title="Informations générales">
-                <div style={{ marginBottom: 16 }}>
-                  <label style={s.label}>Nom d'utilisateur</label>
-                  <input value={user?.username} disabled style={{ ...s.input, opacity: 0.5, cursor: 'not-allowed' }} />
-                  <p style={{ color: '#6b7280', fontSize: '0.75rem', marginTop: 4 }}>Le nom d'utilisateur ne peut pas être modifié.</p>
-                </div>
-                <div>
-                  <label style={s.label}>Bio <span style={{ color: '#6b7280' }}>({bio.length}/150)</span></label>
-                  <textarea value={bio} onChange={(e) => setBio(e.target.value.slice(0, 150))} placeholder="Dites quelque chose sur vous..." style={s.textarea} />
+                <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                  <div>
+                    <label style={s.label}>Nom d'utilisateur</label>
+                    <input value={user?.username} disabled style={{ ...s.input, opacity: 0.5, cursor: 'not-allowed' }} />
+                    <p style={{ color: '#6b7280', fontSize: '0.75rem', marginTop: 4 }}>Non modifiable.</p>
+                  </div>
+                  <div>
+                    <label style={s.label}>Nom complet</label>
+                    <input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Prénom Nom" style={s.input} />
+                  </div>
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+                    <div>
+                      <label style={s.label}>Email</label>
+                      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ex@email.com" style={s.input} />
+                    </div>
+                    <div>
+                      <label style={s.label}>Téléphone (optionnel)</label>
+                      <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+33 6 00 00 00 00" style={s.input} />
+                    </div>
+                  </div>
+                  <div>
+                    <label style={s.label}>Statut</label>
+                    <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginTop:4 }}>
+                      {STATUS_OPTIONS.map(opt => (
+                        <button key={opt.value} onClick={() => setStatus(opt.value)}
+                          style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 14px', border:`2px solid ${status === opt.value ? opt.color : 'transparent'}`, borderRadius:8, background: status === opt.value ? opt.color+'22' : 'rgba(255,255,255,0.04)', color: status === opt.value ? opt.color : '#9ca3af', cursor:'pointer', fontSize:'0.83rem', fontWeight: status === opt.value ? 600 : 400 }}>
+                          <span style={{ width:8, height:8, borderRadius:'50%', background:opt.color, flexShrink:0 }} />
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label style={s.label}>Bio <span style={{ color: '#6b7280' }}>({bio.length}/150)</span></label>
+                    <textarea value={bio} onChange={(e) => setBio(e.target.value.slice(0, 150))} placeholder="Dites quelque chose sur vous..." style={s.textarea} />
+                  </div>
                 </div>
               </Section>
 

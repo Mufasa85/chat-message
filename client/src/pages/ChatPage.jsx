@@ -8,6 +8,7 @@ import CallModal from '../../components/CallModal';
 import CallButton from '../../components/CallButton';
 import VoiceRecorder from '../components/VoiceRecorder';
 import ProfilePage from './ProfilePage';
+import AdminPage from './AdminPage';
 
 // Construire les options de durée depuis l'environnement
 const durations = import.meta.env.VITE_EPHEMERAL_DURATIONS?.split(',').map(Number) || [10, 30, 60, 120, 300];
@@ -279,6 +280,7 @@ export default function ChatPage() {
   const [editRoomDesc, setEditRoomDesc] = useState('');
   const [replyTo, setReplyTo] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
   const bottomRef = useRef(null);
 
   useEffect(() => { fetchRooms(); }, [fetchRooms]);
@@ -464,6 +466,11 @@ export default function ChatPage() {
             >
               {user?.username?.[0]?.toUpperCase()}
             </div>
+            {user?.role === 'admin' && (
+              <button onClick={() => setShowAdmin(true)} title="Administration" className="text-indigo-400 hover:text-indigo-300 p-0.5 flex-shrink-0">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              </button>
+            )}
             <button onClick={() => setShowProfile(true)} className="flex-1 min-w-0 text-left hover:opacity-80 transition-opacity">
               <p className="text-white text-xs font-medium truncate">{user?.username}</p>
               <p className="text-gray-400 text-[10px]">En ligne</p>
@@ -792,6 +799,9 @@ export default function ChatPage() {
 
       {/* Page Profil */}
       {showProfile && <ProfilePage onBack={() => setShowProfile(false)} />}
+
+      {/* Administration */}
+      {showAdmin && <AdminPage onClose={() => setShowAdmin(false)} />}
 
       {/* Toasts de notification */}
       {toasts.length > 0 && (
