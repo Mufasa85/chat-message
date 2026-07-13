@@ -59,7 +59,7 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="bg-gradient-to-br from-indigo-950 via-purple-950 to-slate-950 relative" style={{ minHeight: '100dvh', overflowY: 'auto', display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingTop: 'max(0.75rem, env(safe-area-inset-top))', paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
+    <div className="bg-gradient-to-br from-indigo-950 via-purple-950 to-slate-950 relative" style={{ height: '100dvh', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingTop: 'max(0.75rem, env(safe-area-inset-top))', paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl animate-pulse"></div>
@@ -84,7 +84,7 @@ export default function AuthPage() {
       </div>
 
       {/* Auth Card */}
-      <div className="relative z-10 w-full max-w-sm px-3 sm:px-6 mx-auto">
+      <div className="relative z-10 w-full max-w-sm px-3 sm:px-6 mx-auto" style={{ maxHeight: 'calc(100dvh - 1.5rem)', overflowY: 'auto', scrollbarWidth: 'none' }}>
         <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-4 sm:p-8 shadow-2xl border border-slate-700/50">
           {/* Logo and Title */}
           <div className="text-center mb-3 sm:mb-8">
