@@ -319,6 +319,14 @@ export default function DMPage({ onClose, initialUser = null }) {
                             <img src={att.secureUrl || att.url} alt={att.filename || 'image'} style={{ maxWidth: 220, borderRadius: 10, display: 'block' }} />
                           </a>
                         )}
+                        {/* Vidéo */}
+                        {m.type === 'video' && att && (
+                          <video
+                            src={att.secureUrl || att.url}
+                            controls
+                            style={{ maxWidth: 280, borderRadius: 10, display: 'block' }}
+                          />
+                        )}
                         {/* Audio */}
                         {m.type === 'audio' && att && (
                           <div style={{ ...s.msgBubble(fromMe), padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8, minWidth: 220, maxWidth: 300 }}>
