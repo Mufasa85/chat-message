@@ -48,6 +48,10 @@ services:
       - mongo
     networks:
       - chat_network
+    volumes:
+      # Persiste les fichiers uploadés localement (PDF, Word, Excel...)
+      # Sans ce volume, les fichiers disparaissent à chaque redémarrage du container
+      - uploads_data:/app/uploads
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/api/health"]
       interval: 30s
@@ -75,6 +79,7 @@ services:
 
 volumes:
   mongo_data:
+  uploads_data:
 
 networks:
   chat_network:

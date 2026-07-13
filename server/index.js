@@ -6,6 +6,7 @@ const fs = require('fs');
 const express = require('express');   // Framework HTTP pour l'API REST
 const mongoose = require('mongoose'); // ORM pour parler à MongoDB
 const cors = require('cors');         // Autorise le frontend (autre origine) à appeler l'API
+const path = require('path');
 
 // Import des routes — chaque fichier gère un groupe d'endpoints
 const authRoutes   = require('./routes/auth');    // POST /api/auth/login, /register
@@ -55,6 +56,10 @@ app.use(cors({
 
 // Parse automatiquement les corps de requête JSON
 app.use(express.json());
+
+// Sert les fichiers uploadés localement (PDF, Word, Excel...) en accès public
+// Ex: GET /uploads/1234567890-rapport.pdf → télécharge le fichier
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Montage des routes — chaque préfixe /api/xxx est géré par son fichier
 app.use('/api/auth',   authRoutes);
