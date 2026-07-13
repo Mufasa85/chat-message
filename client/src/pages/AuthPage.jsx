@@ -59,7 +59,7 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="bg-gradient-to-br from-indigo-950 via-purple-950 to-slate-950 relative" style={{ minHeight: '100dvh', overflowY: 'auto', display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingTop: 'max(1.5rem, env(safe-area-inset-top))', paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
+    <div className="bg-gradient-to-br from-indigo-950 via-purple-950 to-slate-950 relative" style={{ minHeight: '100dvh', overflowY: 'auto', display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingTop: 'max(0.75rem, env(safe-area-inset-top))', paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl animate-pulse"></div>
@@ -84,23 +84,23 @@ export default function AuthPage() {
       </div>
 
       {/* Auth Card */}
-      <div className="relative z-10 w-full max-w-md px-4 sm:px-6 mx-auto">
-        <div className="bg-slate-900/80 backdrop-blur-xl rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-700/50">
+      <div className="relative z-10 w-full max-w-sm px-3 sm:px-6 mx-auto">
+        <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-4 sm:p-8 shadow-2xl border border-slate-700/50">
           {/* Logo and Title */}
-          <div className="text-center mb-5 sm:mb-8">
-            <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl mb-3 shadow-lg shadow-indigo-500/25">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="text-center mb-3 sm:mb-8">
+            <div className="inline-flex items-center justify-center w-10 h-10 sm:w-16 sm:h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl mb-2 shadow-lg shadow-indigo-500/25">
+              <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
             </div>
-            <h1 className="text-3xl font-bold text-white mb-2">Arcane Chat</h1>
-            <p className="text-slate-400 text-sm">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">Arcane Chat</h1>
+            <p className="text-slate-400 text-xs sm:text-sm">
               {isLogin ? 'Bon retour parmi nous !' : 'Rejoignez la communauté'}
             </p>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
             {/* Username Input */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-300 block">Nom d'utilisateur</label>
@@ -115,7 +115,7 @@ export default function AuthPage() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Entrez votre pseudo"
-                  className="w-full pl-12 pr-4 py-3.5 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                  className="w-full pl-12 pr-4 py-2.5 sm:py-3.5 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
                   required
                   minLength={2}
                   maxLength={30}
@@ -137,7 +137,7 @@ export default function AuthPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-12 pr-12 py-3.5 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                  className="w-full pl-12 pr-12 py-2.5 sm:py-3.5 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
                   required
                   minLength={6}
                 />
@@ -175,7 +175,7 @@ export default function AuthPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-12 pr-4 py-3.5 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                    className="w-full pl-12 pr-4 py-2.5 sm:py-3.5 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
                     required
                     minLength={6}
                   />
@@ -197,7 +197,7 @@ export default function AuthPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+              className="w-full py-3 sm:py-3.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
@@ -214,7 +214,7 @@ export default function AuthPage() {
           </form>
 
           {/* Divider */}
-          <div className="relative my-4 sm:my-6">
+          <div className="relative my-3 sm:my-6">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-slate-700"></div>
             </div>
@@ -227,7 +227,7 @@ export default function AuthPage() {
           <button
             onClick={handleGuestLogin}
             disabled={loading}
-            className="w-full py-3 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700 text-slate-300 font-medium rounded-xl transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full py-2.5 sm:py-3 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700 text-slate-300 font-medium rounded-xl transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25v0.75z" />
@@ -236,7 +236,7 @@ export default function AuthPage() {
           </button>
 
           {/* Toggle Login/Register */}
-          <div className="mt-6 text-center">
+          <div className="mt-4 sm:mt-6 text-center">
             <button
               onClick={() => {
                 setIsLogin(!isLogin);
@@ -261,7 +261,7 @@ export default function AuthPage() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-slate-500 text-xs mt-6">
+        <p className="text-center text-slate-500 text-xs mt-3">
           En continuant, vous acceptez nos conditions d'utilisation
         </p>
       </div>
