@@ -1,18 +1,18 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const messageSchema = new mongoose.Schema({
   room: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Room",
+    ref: 'Room',
     required: true,
     index: true,
   },
-  author: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  content: { type: String, default: "", trim: true, maxlength: 2000 },
+  author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  content: { type: String, default: '', trim: true, maxlength: 2000 },
   type: {
     type: String,
-    enum: ["text", "system", "giphy", "image", "video", "file", "audio"],
-    default: "text",
+    enum: ['text', 'system', 'giphy', 'image', 'video', 'file', 'audio'],
+    default: 'text',
   },
   createdAt: { type: Date, default: Date.now, index: true },
 
@@ -71,7 +71,7 @@ messageSchema.index({ ephemeral: 1, expiresAt: 1 });
 messageSchema.index({ room: 1, createdAt: -1 });
 
 // Middleware pre-save : calcul automatique de expiresAt
-messageSchema.pre("save", function (next) {
+messageSchema.pre('save', function (next) {
   if (this.ephemeral && !this.expiresAt) {
     this.expiresAt = new Date(Date.now() + this.ttl * 1000);
   }
@@ -89,4 +89,4 @@ messageSchema.statics.createEphemeral = async function (data, ttlSeconds) {
   return ephemeralMessage.save();
 };
 
-module.exports = mongoose.model("Message", messageSchema);
+module.exports = mongoose.model('Message', messageSchema);

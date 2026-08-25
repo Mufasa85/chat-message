@@ -3,7 +3,7 @@
  * Supprime automatiquement les messages de la BDD MongoDB après leur expiration
  */
 
-const Message = require("../models/Message");
+const Message = require('../models/Message');
 
 class CleanupService {
   constructor() {
@@ -17,12 +17,12 @@ class CleanupService {
    */
   start(intervalMs = 30000) {
     if (this.intervalId) {
-      console.log("[CleanupService] Service déjà démarré");
+      console.log('[CleanupService] Service déjà démarré');
       return;
     }
 
     console.log(
-      `[CleanupService] Démarrage du service (intervalle: ${intervalMs}ms)`,
+      `[CleanupService] Démarrage du service (intervalle: ${intervalMs}ms)`
     );
 
     // Nettoyage initial
@@ -39,7 +39,7 @@ class CleanupService {
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;
-      console.log("[CleanupService] Service arrêté");
+      console.log('[CleanupService] Service arrêté');
     }
   }
 
@@ -49,7 +49,7 @@ class CleanupService {
    */
   async cleanup() {
     if (this.isRunning) {
-      console.log("[CleanupService] Nettoyage déjà en cours, ignoré");
+      console.log('[CleanupService] Nettoyage déjà en cours, ignoré');
       return 0;
     }
 
@@ -64,13 +64,13 @@ class CleanupService {
 
       if (result.deletedCount > 0) {
         console.log(
-          `[CleanupService] ${result.deletedCount} message(s) éphémère(s) supprimé(s)`,
+          `[CleanupService] ${result.deletedCount} message(s) éphémère(s) supprimé(s)`
         );
       }
 
       return result.deletedCount;
     } catch (error) {
-      console.error("[CleanupService] Erreur lors du nettoyage:", error);
+      console.error('[CleanupService] Erreur lors du nettoyage:', error);
       return 0;
     } finally {
       this.isRunning = false;
@@ -90,8 +90,8 @@ class CleanupService {
       return result.deletedCount > 0;
     } catch (error) {
       console.error(
-        "[CleanupService] Erreur lors de la suppression du message:",
-        error,
+        '[CleanupService] Erreur lors de la suppression du message:',
+        error
       );
       return false;
     }

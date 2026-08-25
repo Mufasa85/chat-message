@@ -1,7 +1,7 @@
-const express = require("express");
-const { authMiddleware } = require("../middleware/auth");
-const { upload, cloudinary, getResourceType } = require("../middleware/upload");
-const Message = require("../models/Message");
+const express = require('express');
+const { authMiddleware } = require('../middleware/auth');
+const { upload, cloudinary, getResourceType } = require('../middleware/upload');
+const Message = require('../models/Message');
 
 const router = express.Router();
 
@@ -9,29 +9,29 @@ const router = express.Router();
 // - Cloudinary : f.path contient déjà l'URL https://res.cloudinary.com/...
 // - Local (raw) : on déduit l'URL depuis la requête HTTP (host + protocole)
 const buildFileUrl = (f, resourceType, req) => {
-  if (resourceType === "raw") {
+  if (resourceType === 'raw') {
     // Priorité : SERVER_URL env > déduction automatique depuis les headers HTTP
     const base =
-      process.env.SERVER_URL || `${req.protocol}://${req.get("host")}`;
+      process.env.SERVER_URL || `${req.protocol}://${req.get('host')}`;
     return `${base}/uploads/${f.filename}`;
   }
   return f.path; // URL Cloudinary déjà complète
 };
 
 // POST /api/upload — envoyer un fichier (image/audio/vidéo → Cloudinary, raw → local)
-router.post("/", authMiddleware, upload.single("file"), async (req, res) => {
+router.post('/', authMiddleware, upload.single('file'), async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ error: "Aucun fichier reçu" });
+    if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu' });
     const { roomId } = req.body;
 
     const f = req.file;
-    const mime = f.mimetype || "";
+    const mime = f.mimetype || '';
     const resourceType = getResourceType(mime);
 
-    let msgType = "file";
-    if (mime.startsWith("image/")) msgType = "image";
-    else if (mime.startsWith("video/")) msgType = "video";
-    else if (mime.startsWith("audio/")) msgType = "audio";
+    let msgType = 'file';
+    if (mime.startsWith('image/')) msgType = 'image';
+    else if (mime.startsWith('video/')) msgType = 'video';
+    else if (mime.startsWith('audio/')) msgType = 'audio';
 
     const fileUrl = buildFileUrl(f, resourceType, req);
 
@@ -40,36 +40,36 @@ router.post("/", authMiddleware, upload.single("file"), async (req, res) => {
       secureUrl: fileUrl,
       publicId: f.filename,
       resourceType,
-      format: f.originalname.split(".").pop().toLowerCase(),
+      format: f.originalname.split('.').pop().toLowerCase(),
       bytes: f.size,
       width: f.width,
       height: f.height,
       filename: f.originalname,
-      storedLocally: resourceType === "raw", // indique si c'est un fichier local
+      storedLocally: resourceType === 'raw', // indique si c'est un fichier local
     };
 
     // Mode DM : pas de roomId valide, on retourne juste l'attachment
-    if (!roomId || roomId === "dm") {
+    if (!roomId || roomId === 'dm') {
       return res.status(201).json({ type: msgType, attachment });
     }
 
     const message = await Message.create({
       room: roomId,
       author: req.user._id,
-      content: req.body.caption || "",
+      content: req.body.caption || '',
       type: msgType,
       attachment,
     });
-    await message.populate("author", "username avatar");
+    await message.populate('author', 'username avatar');
     res.status(201).json(message);
   } catch (err) {
-    console.error("[UPLOAD]", err.message);
+    console.error('[UPLOAD]', err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
 // DELETE /api/upload/:publicId — supprimer un fichier Cloudinary
-router.delete("/:publicId", authMiddleware, async (req, res) => {
+router.delete('/:publicId', authMiddleware, async (req, res) => {
   try {
     await cloudinary.uploader.destroy(decodeURIComponent(req.params.publicId));
     res.json({ deleted: true });
@@ -79,12 +79,12 @@ router.delete("/:publicId", authMiddleware, async (req, res) => {
 });
 
 // GET /api/upload/giphy?q=cat — recherche ou trending Giphy
-router.get("/giphy", authMiddleware, async (req, res) => {
+router.get('/giphy', authMiddleware, async (req, res) => {
   try {
     const { q, limit = 20, offset = 0 } = req.query;
     const apiKey = process.env.GIPHY_API_KEY;
     if (!apiKey)
-      return res.status(500).json({ error: "GIPHY_API_KEY manquante" });
+      return res.status(500).json({ error: 'GIPHY_API_KEY manquante' });
 
     const endpoint = q
       ? `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encodeURIComponent(q)}&limit=${limit}&offset=${offset}&lang=fr`

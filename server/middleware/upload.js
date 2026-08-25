@@ -1,8 +1,8 @@
-const cloudinary = require("cloudinary").v2;
-const multer = require("multer");
-const { CloudinaryStorage } = require("multer-storage-cloudinary");
-const path = require("path");
-const fs = require("fs");
+const cloudinary = require('cloudinary').v2;
+const multer = require('multer');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const path = require('path');
+const fs = require('fs');
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -11,14 +11,14 @@ cloudinary.config({
 });
 
 const getResourceType = (mimetype) => {
-  if (mimetype.startsWith("image/")) return "image";
-  if (mimetype.startsWith("video/") || mimetype.startsWith("audio/"))
-    return "video";
-  return "raw";
+  if (mimetype.startsWith('image/')) return 'image';
+  if (mimetype.startsWith('video/') || mimetype.startsWith('audio/'))
+    return 'video';
+  return 'raw';
 };
 
 // Dossier local pour les fichiers raw (PDF, Word, Excel...) — Cloudinary gratuit les bloque
-const LOCAL_UPLOADS_DIR = path.join(__dirname, "..", "uploads");
+const LOCAL_UPLOADS_DIR = path.join(__dirname, '..', 'uploads');
 if (!fs.existsSync(LOCAL_UPLOADS_DIR))
   fs.mkdirSync(LOCAL_UPLOADS_DIR, { recursive: true });
 
@@ -31,24 +31,24 @@ const cloudinaryStorage = new CloudinaryStorage({
       folder: `chatapp/${resourceType}s`,
       resource_type: resourceType,
       allowed_formats: [
-        "jpg",
-        "jpeg",
-        "png",
-        "gif",
-        "webp",
-        "mp4",
-        "mov",
-        "avi",
-        "webm",
-        "mp3",
-        "wav",
-        "ogg",
-        "m4a",
+        'jpg',
+        'jpeg',
+        'png',
+        'gif',
+        'webp',
+        'mp4',
+        'mov',
+        'avi',
+        'webm',
+        'mp3',
+        'wav',
+        'ogg',
+        'm4a',
       ],
       use_filename: true,
       unique_filename: true,
-      ...(resourceType === "image"
-        ? { transformation: [{ quality: "auto", fetch_format: "auto" }] }
+      ...(resourceType === 'image'
+        ? { transformation: [{ quality: 'auto', fetch_format: 'auto' }] }
         : {}),
     };
   },
@@ -58,7 +58,7 @@ const cloudinaryStorage = new CloudinaryStorage({
 const localDiskStorage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, LOCAL_UPLOADS_DIR),
   filename: (req, file, cb) => {
-    const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
     const unique = `${Date.now()}-${Math.round(Math.random() * 1e6)}`;
     cb(null, `${unique}-${safeName}`);
   },
@@ -69,7 +69,7 @@ const upload = multer({
   storage: {
     _handleFile(req, file, cb) {
       const resourceType = getResourceType(file.mimetype);
-      if (resourceType === "raw") {
+      if (resourceType === 'raw') {
         localDiskStorage._handleFile(req, file, cb);
       } else {
         cloudinaryStorage._handleFile(req, file, cb);
@@ -77,7 +77,7 @@ const upload = multer({
     },
     _removeFile(req, file, cb) {
       const resourceType = getResourceType(file.mimetype);
-      if (resourceType === "raw") {
+      if (resourceType === 'raw') {
         localDiskStorage._removeFile(req, file, cb);
       } else {
         cloudinaryStorage._removeFile(req, file, cb);
@@ -86,9 +86,9 @@ const upload = multer({
   },
   limits: { fileSize: 50 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const blocked = [".exe", ".sh", ".bat", ".cmd", ".msi", ".dmg"];
+    const blocked = ['.exe', '.sh', '.bat', '.cmd', '.msi', '.dmg'];
     const ext = file.originalname
-      .slice(file.originalname.lastIndexOf("."))
+      .slice(file.originalname.lastIndexOf('.'))
       .toLowerCase();
     if (blocked.includes(ext))
       return cb(new Error(`Type non autorisé : ${ext}`));
