@@ -7,39 +7,44 @@
 ### Trajet complet d'un message
 
 ```
-Utilisateur tape → handleSend() → sendMessage() → emit('send_message') 
+Utilisateur tape → handleSend() → sendMessage() → emit('send_message')
 → WebSocket → WsServer.js → handleSendMessage() → MongoDB → broadcast()
 → tous les membres reçoivent 'new_message' → setMessages() → React affiche
 ```
 
 ### Fichiers impliqués
 
-| Fichier | Rôle |
-|---|---|
-| `ChatPage.jsx` / `DMPage.jsx` | L'utilisateur tape et clique "Envoyer" |
-| `ChatContext.jsx` → `sendMessage()` | Prépare et envoie via WebSocket |
-| `useWebSocket.js` → `emit()` | Sérialise en JSON et envoie sur la connexion WS |
-| `WsServer.js` → `handleSendMessage()` | Reçoit, valide, sauvegarde en BDD, diffuse |
-| `Message` (modèle Mongoose) | Schéma MongoDB : `room`, `author`, `content`, `type`, `attachment` |
-| `MessageBubble.jsx` | Affiche le message selon son type |
+| Fichier                               | Rôle                                                               |
+| ------------------------------------- | ------------------------------------------------------------------ |
+| `ChatPage.jsx` / `DMPage.jsx`         | L'utilisateur tape et clique "Envoyer"                             |
+| `ChatContext.jsx` → `sendMessage()`   | Prépare et envoie via WebSocket                                    |
+| `useWebSocket.js` → `emit()`          | Sérialise en JSON et envoie sur la connexion WS                    |
+| `WsServer.js` → `handleSendMessage()` | Reçoit, valide, sauvegarde en BDD, diffuse                         |
+| `Message` (modèle Mongoose)           | Schéma MongoDB : `room`, `author`, `content`, `type`, `attachment` |
+| `MessageBubble.jsx`                   | Affiche le message selon son type                                  |
 
 ### Code clé — `handleSendMessage` (serveur)
 
 ```js
 // WsServer.js
-const handleSendMessage = async (ws, { roomId, content, type, attachment, ephemeral, ttl, replyTo }) => {
-  const state = clients.get(ws);          // Qui envoie ?
-  if (!content?.trim()) return;            // Refuser les messages vides
+const handleSendMessage = async (
+  ws,
+  { roomId, content, type, attachment, ephemeral, ttl, replyTo },
+) => {
+  const state = clients.get(ws); // Qui envoie ?
+  if (!content?.trim()) return; // Refuser les messages vides
 
-  const message = await Message.create({   // Sauvegarder en MongoDB
+  const message = await Message.create({
+    // Sauvegarder en MongoDB
     room: roomId,
     author: state.user._id,
     content: content.trim().substring(0, 2000), // Max 2000 caractères
-    type: type || 'text',
-    attachment, replyTo,
+    type: type || "text",
+    attachment,
+    replyTo,
   });
 
-  broadcast(roomId, 'new_message', msgPayload); // Envoyer à tous les membres du salon
+  broadcast(roomId, "new_message", msgPayload); // Envoyer à tous les membres du salon
 };
 ```
 
@@ -81,13 +86,13 @@ Micro → MediaRecorder API → Blob audio → FormData → POST /api/upload
 
 ### Fichiers impliqués
 
-| Fichier | Rôle |
-|---|---|
-| `ChatPage.jsx` | Bouton micro, démarre/arrête l'enregistrement |
+| Fichier                          | Rôle                                                      |
+| -------------------------------- | --------------------------------------------------------- |
+| `ChatPage.jsx`                   | Bouton micro, démarre/arrête l'enregistrement             |
 | `useFileUpload.jsx` → `upload()` | Envoie le fichier audio via XHR avec barre de progression |
-| `server/middleware/upload.js` | Multer + Cloudinary : reçoit et stocke le fichier |
-| `server/routes/upload.js` | Crée le message de type `'audio'` en BDD |
-| `MessageBubble.jsx` | Affiche `<audio controls src={...} />` |
+| `server/middleware/upload.js`    | Multer + Cloudinary : reçoit et stocke le fichier         |
+| `server/routes/upload.js`        | Crée le message de type `'audio'` en BDD                  |
+| `MessageBubble.jsx`              | Affiche `<audio controls src={...} />`                    |
 
 ### Code clé — Enregistrement (client)
 
@@ -98,14 +103,14 @@ const chunks = [];
 
 mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
 mediaRecorder.onstop = () => {
-  const blob = new Blob(chunks, { type: 'audio/webm' }); // Assemblage du fichier
-  const file = new File([blob], 'vocal.webm', { type: 'audio/webm' });
+  const blob = new Blob(chunks, { type: "audio/webm" }); // Assemblage du fichier
+  const file = new File([blob], "vocal.webm", { type: "audio/webm" });
   upload(file, currentRoom._id); // Envoi vers /api/upload via useFileUpload
 };
 
-mediaRecorder.start();    // Début enregistrement
+mediaRecorder.start(); // Début enregistrement
 // ... l'utilisateur parle ...
-mediaRecorder.stop();     // Fin → déclenche onstop
+mediaRecorder.stop(); // Fin → déclenche onstop
 ```
 
 ### Code clé — Réception côté serveur
@@ -113,17 +118,18 @@ mediaRecorder.stop();     // Fin → déclenche onstop
 ```js
 // server/routes/upload.js
 const mime = f.mimetype; // 'audio/webm'
-let msgType = 'file';
-if (mime.startsWith('audio/')) msgType = 'audio'; // ← détection automatique
+let msgType = "file";
+if (mime.startsWith("audio/")) msgType = "audio"; // ← détection automatique
 
 const message = await Message.create({
-  room: roomId, author: req.user._id,
-  type: msgType,           // 'audio'
+  room: roomId,
+  author: req.user._id,
+  type: msgType, // 'audio'
   attachment: {
-    secureUrl: f.path,     // URL Cloudinary pour lire le fichier
+    secureUrl: f.path, // URL Cloudinary pour lire le fichier
     filename: f.originalname,
     bytes: f.size,
-  }
+  },
 });
 ```
 
@@ -142,12 +148,12 @@ Clic 📎 → <input type="file"> → onChange → upload() → XHR POST /api/up
 
 ### Fichiers impliqués
 
-| Fichier | Rôle |
-|---|---|
-| `useFileUpload.jsx` | Hook + composant `<FileInput>` intégré, gère la progression XHR |
+| Fichier                       | Rôle                                                             |
+| ----------------------------- | ---------------------------------------------------------------- |
+| `useFileUpload.jsx`           | Hook + composant `<FileInput>` intégré, gère la progression XHR  |
 | `server/middleware/upload.js` | Configure Multer + Cloudinary, filtre les extensions dangereuses |
-| `server/routes/upload.js` | Route `POST /api/upload`, crée le message |
-| `MessageBubble.jsx` | Affiche image / audio / lien téléchargement selon `msg.type` |
+| `server/routes/upload.js`     | Route `POST /api/upload`, crée le message                        |
+| `MessageBubble.jsx`           | Affiche image / audio / lien téléchargement selon `msg.type`     |
 
 ### Pourquoi XHR et pas fetch ?
 
@@ -155,7 +161,7 @@ Clic 📎 → <input type="file"> → onChange → upload() → XHR POST /api/up
 // useFileUpload.jsx — XHR permet de suivre la progression upload
 const xhr = new XMLHttpRequest();
 xhr.upload.onprogress = (e) => {
-  setProgress(Math.round(e.loaded / e.total * 100)); // 0% → 100%
+  setProgress(Math.round((e.loaded / e.total) * 100)); // 0% → 100%
 };
 // fetch() ne supporte pas onprogress → impossible d'afficher la barre
 ```
@@ -164,7 +170,7 @@ xhr.upload.onprogress = (e) => {
 
 ```js
 // server/middleware/upload.js
-const blocked = ['.exe', '.sh', '.bat', '.cmd', '.msi', '.dmg'];
+const blocked = [".exe", ".sh", ".bat", ".cmd", ".msi", ".dmg"];
 // Ces extensions sont rejetées → impossible d'uploader un virus
 ```
 
@@ -202,26 +208,26 @@ CallButton (Mic) → startCall(user, 'audio')
 
 ### Fichiers impliqués
 
-| Fichier | Rôle |
-|---|---|
-| `CallButton.jsx` | Deux boutons : Mic (audio) et Video |
-| `useWebRTC.js` → `startCall()` | Démarre l'appel côté appelant |
-| `useWebRTC.js` → `handleIncomingCall()` | Reçoit l'appel côté receveur |
-| `useWebRTC.js` → `acceptCall()` | Accepte et complète la connexion |
-| `WsServer.js` → `handleCallOffer/Answer/IceCandidate` | Relais des signaux (signaling) |
-| `CallModal.jsx` | Interface : sonnerie, boutons accepter/refuser, bouton couper micro |
+| Fichier                                               | Rôle                                                                |
+| ----------------------------------------------------- | ------------------------------------------------------------------- |
+| `CallButton.jsx`                                      | Deux boutons : Mic (audio) et Video                                 |
+| `useWebRTC.js` → `startCall()`                        | Démarre l'appel côté appelant                                       |
+| `useWebRTC.js` → `handleIncomingCall()`               | Reçoit l'appel côté receveur                                        |
+| `useWebRTC.js` → `acceptCall()`                       | Accepte et complète la connexion                                    |
+| `WsServer.js` → `handleCallOffer/Answer/IceCandidate` | Relais des signaux (signaling)                                      |
+| `CallModal.jsx`                                       | Interface : sonnerie, boutons accepter/refuser, bouton couper micro |
 
 ### Code clé — `startCall` étapes numérotées
 
 ```js
 const startCall = async (targetUser, type) => {
-  const stream = await getLocalStream(type);      // 1. Accès micro
-  attachLocalVideo(stream);                       // 2. Afficher miniature (vide en audio)
-  const pc = await createPeerConnection(userId);  // 3. Créer RTCPeerConnection avec STUN/TURN
-  const offer = await pc.createOffer();           // 4. Générer l'offre SDP
-  await pc.setLocalDescription(offer);            // 5. Enregistrer localement
-  emit('call_offer', { sdp: offer, callType: type }); // 6. Envoyer via WebSocket
-  setCallState('calling');                        // 7. UI → "Appel en cours..."
+  const stream = await getLocalStream(type); // 1. Accès micro
+  attachLocalVideo(stream); // 2. Afficher miniature (vide en audio)
+  const pc = await createPeerConnection(userId); // 3. Créer RTCPeerConnection avec STUN/TURN
+  const offer = await pc.createOffer(); // 4. Générer l'offre SDP
+  await pc.setLocalDescription(offer); // 5. Enregistrer localement
+  emit("call_offer", { sdp: offer, callType: type }); // 6. Envoyer via WebSocket
+  setCallState("calling"); // 7. UI → "Appel en cours..."
 };
 ```
 
@@ -265,12 +271,12 @@ Sans `muted`, on entendrait notre propre voix dans notre propre haut-parleur →
 
 ```js
 // useWebRTC.js — quand la connexion est établie (state === 'connected')
-if (sender.track.kind === 'video') {
-  params.encodings[0].maxBitrate   = 500_000; // 500 kbps max
-  params.encodings[0].maxFramerate = 24;       // 24 fps max
+if (sender.track.kind === "video") {
+  params.encodings[0].maxBitrate = 500_000; // 500 kbps max
+  params.encodings[0].maxFramerate = 24; // 24 fps max
 }
-if (sender.track.kind === 'audio') {
-  params.encodings[0].maxBitrate = 64_000;   // 64 kbps max
+if (sender.track.kind === "audio") {
+  params.encodings[0].maxBitrate = 64_000; // 64 kbps max
 }
 // Sans ça → le navigateur peut envoyer 4 Mbps → sature la 4G → blocage
 ```
@@ -318,7 +324,7 @@ Ils ne peuvent pas se connecter directement car leurs IP sont privées.
 // useWebRTC.js
 pc.onicecandidate = (e) => {
   if (e.candidate) {
-    emit('ice_candidate', { targetUserId: targetId, candidate: e.candidate });
+    emit("ice_candidate", { targetUserId: targetId, candidate: e.candidate });
     // On envoie chaque adresse réseau découverte à l'autre via WebSocket
   }
 };

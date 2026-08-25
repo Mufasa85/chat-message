@@ -80,15 +80,15 @@ navigateurs** sans passer par le serveur.
 
 ## Technologies utilisées
 
-| Technologie | Rôle |
-|---|---|
-| **WebRTC** (`RTCPeerConnection`) | Connexion P2P audio/vidéo entre navigateurs |
-| **getUserMedia** | Accès au microphone et à la caméra |
-| **WebSocket** (`ws`) | Transport du signaling (offre SDP, réponse SDP, ICE candidates) |
-| **STUN** (Google) | Découverte de l'IP publique pour traverser le NAT |
-| **TURN** (Metered.ca) | Relai de secours quand la connexion P2P directe est impossible |
-| **React Hooks** | Gestion d'état et cycle de vie du composant |
-| **Web Audio API** | Génération de la sonnerie d'appel entrant |
+| Technologie                      | Rôle                                                            |
+| -------------------------------- | --------------------------------------------------------------- |
+| **WebRTC** (`RTCPeerConnection`) | Connexion P2P audio/vidéo entre navigateurs                     |
+| **getUserMedia**                 | Accès au microphone et à la caméra                              |
+| **WebSocket** (`ws`)             | Transport du signaling (offre SDP, réponse SDP, ICE candidates) |
+| **STUN** (Google)                | Découverte de l'IP publique pour traverser le NAT               |
+| **TURN** (Metered.ca)            | Relai de secours quand la connexion P2P directe est impossible  |
+| **React Hooks**                  | Gestion d'état et cycle de vie du composant                     |
+| **Web Audio API**                | Génération de la sonnerie d'appel entrant                       |
 
 ---
 
@@ -236,18 +236,18 @@ Alice reçoit 'call_answer' avec accepted: false
 
 ### Client
 
-| Fichier | Rôle |
-|---|---|
-| `client/src/hooks/useWebRTC.js` | **Hook principal** — gère tout le cycle de vie WebRTC |
-| `client/components/CallModal.jsx` | **Interface d'appel** — affiche les différents états |
-| `client/components/CallButton.jsx` | **Boutons d'appel** — 🎙 audio et 📹 vidéo |
-| `client/src/context/ChatContext.jsx` | **Routing** — connecte le WebSocket au hook WebRTC |
-| `client/src/pages/ChatPage.jsx` | **Page principale** — monte CallModal et CallButton |
+| Fichier                              | Rôle                                                  |
+| ------------------------------------ | ----------------------------------------------------- |
+| `client/src/hooks/useWebRTC.js`      | **Hook principal** — gère tout le cycle de vie WebRTC |
+| `client/components/CallModal.jsx`    | **Interface d'appel** — affiche les différents états  |
+| `client/components/CallButton.jsx`   | **Boutons d'appel** — 🎙 audio et 📹 vidéo             |
+| `client/src/context/ChatContext.jsx` | **Routing** — connecte le WebSocket au hook WebRTC    |
+| `client/src/pages/ChatPage.jsx`      | **Page principale** — monte CallModal et CallButton   |
 
 ### Serveur
 
-| Fichier | Rôle |
-|---|---|
+| Fichier                        | Rôle                                                         |
+| ------------------------------ | ------------------------------------------------------------ |
 | `server/websocket/WsServer.js` | **Signaling** — relaie les messages WebRTC entre les clients |
 
 ---
@@ -258,54 +258,54 @@ Alice reçoit 'call_answer' avec accepted: false
 
 #### États exposés
 
-| État | Type | Description |
-|---|---|---|
-| `callState` | `'idle' \| 'calling' \| 'incoming' \| 'active'` | Phase actuelle de l'appel |
-| `callType` | `'audio' \| 'video' \| null` | Type d'appel en cours |
-| `remoteUser` | `{ username, avatar }` | Informations sur l'interlocuteur |
-| `isMuted` | `boolean` | Micro coupé ou non |
-| `isCamOff` | `boolean` | Caméra coupée ou non |
-| `remoteStream` | `MediaStream \| null` | Flux audio/vidéo distant |
+| État           | Type                                            | Description                      |
+| -------------- | ----------------------------------------------- | -------------------------------- |
+| `callState`    | `'idle' \| 'calling' \| 'incoming' \| 'active'` | Phase actuelle de l'appel        |
+| `callType`     | `'audio' \| 'video' \| null`                    | Type d'appel en cours            |
+| `remoteUser`   | `{ username, avatar }`                          | Informations sur l'interlocuteur |
+| `isMuted`      | `boolean`                                       | Micro coupé ou non               |
+| `isCamOff`     | `boolean`                                       | Caméra coupée ou non             |
+| `remoteStream` | `MediaStream \| null`                           | Flux audio/vidéo distant         |
 
 #### Refs exposées
 
-| Ref | Type | Description |
-|---|---|---|
-| `localVideoRef` | `React.RefObject<HTMLVideoElement>` | Élément `<video>` pour la prévisualisation locale |
-| `remoteVideoRef` | `React.RefObject<HTMLVideoElement>` | Élément `<video>` pour la vidéo distante |
-| `remoteAudioRef` | `React.RefObject<HTMLAudioElement>` | Élément `<audio>` pour l'audio distant |
-| `remoteStreamRef` | `React.RefObject<MediaStream>` | Ref vers le stream distant |
+| Ref               | Type                                | Description                                       |
+| ----------------- | ----------------------------------- | ------------------------------------------------- |
+| `localVideoRef`   | `React.RefObject<HTMLVideoElement>` | Élément `<video>` pour la prévisualisation locale |
+| `remoteVideoRef`  | `React.RefObject<HTMLVideoElement>` | Élément `<video>` pour la vidéo distante          |
+| `remoteAudioRef`  | `React.RefObject<HTMLAudioElement>` | Élément `<audio>` pour l'audio distant            |
+| `remoteStreamRef` | `React.RefObject<MediaStream>`      | Ref vers le stream distant                        |
 
 #### Méthodes — Actions utilisateur
 
-| Méthode | Paramètres | Description |
-|---|---|---|
+| Méthode                       | Paramètres                                               | Description                          |
+| ----------------------------- | -------------------------------------------------------- | ------------------------------------ |
 | `startCall(targetUser, type)` | `targetUser`: objet user, `type`: `'audio'` ou `'video'` | Démarre un appel vers un utilisateur |
-| `acceptCall()` | — | Accepte l'appel entrant |
-| `rejectCall()` | — | Refuse l'appel entrant |
-| `hangUp()` | — | Raccroche l'appel en cours |
-| `toggleMute()` | — | Coupe/active le micro |
-| `toggleCamera()` | — | Coupe/active la caméra |
+| `acceptCall()`                | —                                                        | Accepte l'appel entrant              |
+| `rejectCall()`                | —                                                        | Refuse l'appel entrant               |
+| `hangUp()`                    | —                                                        | Raccroche l'appel en cours           |
+| `toggleMute()`                | —                                                        | Coupe/active le micro                |
+| `toggleCamera()`              | —                                                        | Coupe/active la caméra               |
 
 #### Méthodes — Handlers WebSocket (appelées par ChatContext)
 
-| Méthode | Événement WS | Description |
-|---|---|---|
-| `handleIncomingCall(data)` | `incoming_call` | Reçoit une offre d'appel entrant |
-| `handleCallAnswer(data)` | `call_answer` | Reçoit la réponse (accepté/refusé + SDP) |
-| `handleIceCandidate(data)` | `ice_candidate` | Reçoit un ICE candidate du pair |
-| `handleCallEnd(data)` | `call_end` | L'autre pair a raccroché |
+| Méthode                    | Événement WS    | Description                              |
+| -------------------------- | --------------- | ---------------------------------------- |
+| `handleIncomingCall(data)` | `incoming_call` | Reçoit une offre d'appel entrant         |
+| `handleCallAnswer(data)`   | `call_answer`   | Reçoit la réponse (accepté/refusé + SDP) |
+| `handleIceCandidate(data)` | `ice_candidate` | Reçoit un ICE candidate du pair          |
+| `handleCallEnd(data)`      | `call_end`      | L'autre pair a raccroché                 |
 
 #### Fonctions internes
 
-| Fonction | Description |
-|---|---|
-| `getLocalStream(type)` | Appelle `getUserMedia()` pour obtenir le flux micro (+caméra si vidéo) |
-| `attachLocalVideo(stream)` | Attache le flux local à `localVideoRef` |
-| `attachRemoteStream(stream)` | Attache le flux distant à `remoteVideoRef` et `remoteAudioRef` |
-| `createPeerConnection(targetId)` | Crée le `RTCPeerConnection` avec STUN/TURN, attache les tracks |
-| `cleanup()` | Stoppe les tracks, ferme le PC, réinitialise tout l'état |
-| `flushPendingCandidates()` | Applique les ICE candidates reçus avant le `setRemoteDescription` |
+| Fonction                         | Description                                                            |
+| -------------------------------- | ---------------------------------------------------------------------- |
+| `getLocalStream(type)`           | Appelle `getUserMedia()` pour obtenir le flux micro (+caméra si vidéo) |
+| `attachLocalVideo(stream)`       | Attache le flux local à `localVideoRef`                                |
+| `attachRemoteStream(stream)`     | Attache le flux distant à `remoteVideoRef` et `remoteAudioRef`         |
+| `createPeerConnection(targetId)` | Crée le `RTCPeerConnection` avec STUN/TURN, attache les tracks         |
+| `cleanup()`                      | Stoppe les tracks, ferme le PC, réinitialise tout l'état               |
+| `flushPendingCandidates()`       | Applique les ICE candidates reçus avant le `setRemoteDescription`      |
 
 ---
 
@@ -313,17 +313,18 @@ Alice reçoit 'call_answer' avec accepted: false
 
 Affiche un overlay plein écran selon `callState` :
 
-| État | Affichage |
-|---|---|
-| `idle` | Rien (return null) |
-| `calling` | Avatar + "Appel en cours..." + bouton raccrocher |
-| `incoming` | Avatar + "📞 Appel entrant" + sonnerie + boutons accepter/refuser |
+| État               | Affichage                                                                  |
+| ------------------ | -------------------------------------------------------------------------- |
+| `idle`             | Rien (return null)                                                         |
+| `calling`          | Avatar + "Appel en cours..." + bouton raccrocher                           |
+| `incoming`         | Avatar + "📞 Appel entrant" + sonnerie + boutons accepter/refuser          |
 | `active` + `audio` | Avatar + "🎙 Appel audio actif" + boutons mute/raccrocher + `<audio>` caché |
-| `active` + `video` | Vidéo distante plein écran + vidéo locale (petit coin) + contrôles |
+| `active` + `video` | Vidéo distante plein écran + vidéo locale (petit coin) + contrôles         |
 
 #### Sonnerie (`useRingtone`)
 
 Hook interne qui génère un bip à 440Hz toutes les 2 secondes via l'**API Web Audio** :
+
 - Crée un `AudioContext` + `OscillatorNode` + `GainNode`
 - Joue un son court (0.6s) avec décroissance exponentielle
 - S'active quand `callState === 'incoming'`
@@ -340,6 +341,7 @@ arriver avant que React ait rendu le composant).
 ### `CallButton.jsx` — Boutons d'appel
 
 Deux boutons simples affichés à côté du nom d'un utilisateur en ligne :
+
 - 🎙 → `onCall(user, 'audio')`
 - 📹 → `onCall(user, 'video')`
 
@@ -378,12 +380,12 @@ ce qui évite les problèmes de closure stale dans le callback `onMessage`.
 Le serveur ne fait **aucun traitement** sur les données WebRTC. Il relaie simplement les
 messages entre les deux clients via `userSockets` (Map userId → WebSocket).
 
-| Événement reçu | Handler | Action | Événement émis |
-|---|---|---|---|
-| `call_offer` | `handleCallOffer()` | Relaie l'offre SDP vers le destinataire | `incoming_call` |
-| `call_answer` | `handleCallAnswer()` | Relaie la réponse SDP vers l'appelant | `call_answer` |
-| `ice_candidate` | `handleIceCandidate()` | Relaie le candidate ICE | `ice_candidate` |
-| `call_end` | `handleCallEnd()` | Relaie le signal de fin | `call_end` |
+| Événement reçu  | Handler                | Action                                  | Événement émis  |
+| --------------- | ---------------------- | --------------------------------------- | --------------- |
+| `call_offer`    | `handleCallOffer()`    | Relaie l'offre SDP vers le destinataire | `incoming_call` |
+| `call_answer`   | `handleCallAnswer()`   | Relaie la réponse SDP vers l'appelant   | `call_answer`   |
+| `ice_candidate` | `handleIceCandidate()` | Relaie le candidate ICE                 | `ice_candidate` |
+| `call_end`      | `handleCallEnd()`      | Relaie le signal de fin                 | `call_end`      |
 
 ### Données transmises
 
@@ -441,10 +443,10 @@ messages entre les deux clients via `userSockets` (Map userId → WebSocket).
 La plupart des appareils sont derrière un **NAT** (routeur WiFi, réseau mobile). WebRTC a
 besoin de connaître l'adresse IP publique de chaque pair pour établir la connexion P2P.
 
-| Protocole | Rôle | Quand utilisé |
-|---|---|---|
-| **STUN** | Découvre l'IP publique du pair | Toujours (première étape) |
-| **TURN** | **Relaie** le flux si la connexion directe échoue | NAT symétriques, pare-feu stricts, réseaux mobiles |
+| Protocole | Rôle                                              | Quand utilisé                                      |
+| --------- | ------------------------------------------------- | -------------------------------------------------- |
+| **STUN**  | Découvre l'IP publique du pair                    | Toujours (première étape)                          |
+| **TURN**  | **Relaie** le flux si la connexion directe échoue | NAT symétriques, pare-feu stricts, réseaux mobiles |
 
 ### Configuration actuelle
 
@@ -457,6 +459,7 @@ VITE_TURN_PASSWORD=def456
 ```
 
 Les serveurs STUN Google sont utilisés par défaut (gratuits, illimités) :
+
 - `stun:stun.l.google.com:19302`
 - `stun:stun1.l.google.com:19302`
 - `stun:stun2.l.google.com:19302`
@@ -482,6 +485,7 @@ Les serveurs STUN Google sont utilisés par défaut (gratuits, illimités) :
 VITE_WS_URL=ws://10.173.193.120:3001/ws
 VITE_API_URL=http://10.173.193.120:3001/api
 ```
+
 - ✅ Fonctionne sur le même réseau WiFi entre PCs
 - ❌ Ne fonctionne pas sur mobile (HTTP bloque getUserMedia)
 
@@ -491,6 +495,7 @@ VITE_API_URL=http://10.173.193.120:3001/api
 VITE_WS_URL=wss://xxx.trycloudflare.com/ws
 VITE_API_URL=https://xxx.trycloudflare.com/api
 ```
+
 - ✅ HTTPS automatique → micro/caméra autorisés partout
 - ✅ Accessible depuis n'importe quel réseau
 - ⚠️ URLs temporaires qui changent à chaque redémarrage du tunnel

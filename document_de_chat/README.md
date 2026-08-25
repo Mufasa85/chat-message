@@ -17,6 +17,7 @@
 ## 🔍 Aperçu du Projet
 
 **ArcaneCore Messenger** est une application de chat en temps réel inspirée de Discord, construite avec :
+
 - **Frontend** : React + Vite + TailwindCSS
 - **Backend** : Node.js + Express
 - **Base de données** : MongoDB
@@ -24,6 +25,7 @@
 - **Authentification** : JWT
 
 ### 🎯 Objectif Principal
+
 Permettre aux utilisateurs de communiquer en temps réel via des salons de discussion, avec une fonctionnalité unique de **messages éphémères** qui s'auto-suppriment après un temps défini.
 
 ---
@@ -60,11 +62,13 @@ chat-app/
 ## ⚙️ Installation
 
 ### 1. Prérequis
+
 - Node.js v18+
 - MongoDB (local ou Atlas)
 - Git
 
 ### 2. Installation automatique
+
 ```bash
 # Cloner le projet
 git clone https://github.com/Mufasa85/chat-message.git
@@ -77,6 +81,7 @@ bash setup.sh
 ```
 
 ### 3. Installation manuelle
+
 ```bash
 # Installer les dépendances serveur
 cd server
@@ -92,6 +97,7 @@ cp client/.env.example client/.env  # si disponible
 ```
 
 ### 4. Lancer l'application
+
 ```bash
 # Terminal 1 - Serveur (port 3001)
 cd server
@@ -107,27 +113,32 @@ npm run dev
 ## ✨ Fonctionnalités
 
 ### 🔐 Authentification
+
 - Inscription / Connexion
 - JWT token pour la sécurité
 - Sessions persistantes
 
 ### 💬 Salons de Discussion
+
 - Création de salons textuels
 - Liste des salons disponibles
 - Rejoindre/quitter un salon
 
 ### 📡 Chat en Temps Réel
+
 - Messages instantanés via WebSocket
 - Indicateur "en train de taper"
 - Liste des utilisateurs en ligne
 - Messages persistants en base de données
 
 ### ⏱️ Messages Éphémères (⭐ Fonctionnalité Principale)
+
 - Définir une durée de vie pour un message
 - Auto-suppression après expiration
 - Configurable par l'administrateur
 
 ### 🎨 Interface
+
 - Design style Discord
 - Responsive
 - Thème sombre
@@ -139,6 +150,7 @@ npm run dev
 ### 🎯 Rôle
 
 Les **messages éphémères** sont des messages temporaires qui :
+
 1. Existent en base de données pendant une durée définie
 2. Sont automatiquement supprimés après expiration
 3. Permettent de partager des informations à court terme (codes, liens temporaires, etc.)
@@ -171,6 +183,7 @@ Les **messages éphémères** sont des messages temporaires qui :
 ```
 
 **Logique :**
+
 1. L'utilisateur clique sur le bouton ⏱️
 2. Sélectionne une durée (10s, 30s, 1min, 2min, 5min)
 3. Envoie le message
@@ -179,6 +192,7 @@ Les **messages éphémères** sont des messages temporaires qui :
 #### Côté Serveur
 
 **1. Réception du message** (`server/websocket/WsServer.js`)
+
 ```javascript
 // Quand un message éphémère est reçu
 {
@@ -190,6 +204,7 @@ Les **messages éphémères** sont des messages temporaires qui :
 ```
 
 **2. Stockage en base** (`server/models/Message.js`)
+
 ```javascript
 {
   content: 'Mon message secret',
@@ -203,27 +218,28 @@ Les **messages éphémères** sont des messages temporaires qui :
 ```
 
 **3. Nettoyage automatique** (`server/services/cleanupExpiredMessages.js`)
+
 ```javascript
 // Ce service s'exécute toutes les 30 secondes
 async function cleanupExpiredMessages() {
   // Supprime tous les messages où expiresAt < maintenant
   await Message.deleteMany({
     ephemeral: true,
-    expiresAt: { $lt: new Date() }
+    expiresAt: { $lt: new Date() },
   });
 }
 ```
 
 ### 📁 Fichiers Clés
 
-| Fichier | Rôle |
-|---------|------|
-| `client/src/pages/ChatPage.jsx` | Interface du chat, bouton éphémère |
-| `client/.env` | Configuration des durées (VITE_EPHEMERAL_*) |
-| `server/models/Message.js` | Schéma du message avec champs éphémères |
-| `server/services/cleanupExpiredMessages.js` | Service de nettoyage automatique |
-| `server/websocket/WsServer.js` | Gestion WebSocket des messages |
-| `server/index.js` | Intégration du service de cleanup |
+| Fichier                                     | Rôle                                        |
+| ------------------------------------------- | ------------------------------------------- |
+| `client/src/pages/ChatPage.jsx`             | Interface du chat, bouton éphémère          |
+| `client/.env`                               | Configuration des durées (VITE_EPHEMERAL_*) |
+| `server/models/Message.js`                  | Schéma du message avec champs éphémères     |
+| `server/services/cleanupExpiredMessages.js` | Service de nettoyage automatique            |
+| `server/websocket/WsServer.js`              | Gestion WebSocket des messages              |
+| `server/index.js`                           | Intégration du service de cleanup           |
 
 ### ⚙️ Configuration des Durées
 
@@ -238,6 +254,7 @@ VITE_EPHEMERAL_LABELS=10 sec,30 sec,1 min,2 min,5 min
 ```
 
 **Pour ajouter/modifier :**
+
 1. Éditez `client/.env`
 2. Redémarrez le client
 3. Les nouvelles durées apparaissent dans le menu
@@ -248,29 +265,29 @@ VITE_EPHEMERAL_LABELS=10 sec,30 sec,1 min,2 min,5 min
 
 ### Frontend (`client/`)
 
-| Fichier | Description |
-|---------|-------------|
-| `src/App.jsx` | Composant principal avec routage |
-| `src/pages/ChatPage.jsx` | Page principale du chat |
-| `src/pages/AuthPage.jsx` | Page de connexion/inscription |
-| `src/context/AuthContext.jsx` | Gestion état auth |
-| `src/context/ChatContext.jsx` | Gestion état chat |
-| `src/hooks/useWebSocket.js` | Hook pour WebSocket |
-| `.env` | URLs API/WebSocket, durées éphémères |
+| Fichier                       | Description                          |
+| ----------------------------- | ------------------------------------ |
+| `src/App.jsx`                 | Composant principal avec routage     |
+| `src/pages/ChatPage.jsx`      | Page principale du chat              |
+| `src/pages/AuthPage.jsx`      | Page de connexion/inscription        |
+| `src/context/AuthContext.jsx` | Gestion état auth                    |
+| `src/context/ChatContext.jsx` | Gestion état chat                    |
+| `src/hooks/useWebSocket.js`   | Hook pour WebSocket                  |
+| `.env`                        | URLs API/WebSocket, durées éphémères |
 
 ### Backend (`server/`)
 
-| Fichier | Description |
-|---------|-------------|
-| `index.js` | Point d'entrée Express + Socket.io |
-| `models/User.js` | Schéma utilisateur MongoDB |
-| `models/Message.js` | Schéma message (avec éphémère) |
-| `models/Room.js` | Schéma salon |
-| `routes/auth.js` | Routes d'authentification |
-| `routes/rooms.js` | Routes de gestion des salons |
-| `websocket/WsServer.js` | Logique Socket.io |
-| `services/cleanupExpiredMessages.js` | Nettoyage auto messages |
-| `.env` | Config MongoDB, JWT, cleanup |
+| Fichier                              | Description                        |
+| ------------------------------------ | ---------------------------------- |
+| `index.js`                           | Point d'entrée Express + Socket.io |
+| `models/User.js`                     | Schéma utilisateur MongoDB         |
+| `models/Message.js`                  | Schéma message (avec éphémère)     |
+| `models/Room.js`                     | Schéma salon                       |
+| `routes/auth.js`                     | Routes d'authentification          |
+| `routes/rooms.js`                    | Routes de gestion des salons       |
+| `websocket/WsServer.js`              | Logique Socket.io                  |
+| `services/cleanupExpiredMessages.js` | Nettoyage auto messages            |
+| `.env`                               | Config MongoDB, JWT, cleanup       |
 
 ---
 
@@ -308,23 +325,25 @@ DEFAULT_MESSAGE_TTL=300          # TTL par défaut 5min
 
 ### API REST
 
-| Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| POST | `/api/auth/register` | Inscription |
-| POST | `/api/auth/login` | Connexion |
-| GET | `/api/rooms` | Liste des salons |
-| POST | `/api/rooms` | Créer un salon |
-| GET | `/api/rooms/:id/messages` | Messages d'un salon |
+| Méthode | Endpoint                  | Description         |
+| ------- | ------------------------- | ------------------- |
+| POST    | `/api/auth/register`      | Inscription         |
+| POST    | `/api/auth/login`         | Connexion           |
+| GET     | `/api/rooms`              | Liste des salons    |
+| POST    | `/api/rooms`              | Créer un salon      |
+| GET     | `/api/rooms/:id/messages` | Messages d'un salon |
 
 ### WebSocket (Socket.io)
 
 **Événements Client → Serveur :**
+
 - `join_room` - Rejoindre un salon
 - `leave_room` - Quitter un salon
 - `message` - Envoyer un message
 - `typing` - Indicateur de frappe
 
 **Événements Serveur → Client :**
+
 - `room_joined` - Salon rejoint
 - `room_left` - Salon quitté
 - `new_message` - Nouveau message
@@ -340,6 +359,7 @@ DEFAULT_MESSAGE_TTL=300          # TTL par défaut 5min
 ### Collections MongoDB
 
 **users**
+
 ```javascript
 {
   username: String,
@@ -351,6 +371,7 @@ DEFAULT_MESSAGE_TTL=300          # TTL par défaut 5min
 ```
 
 **rooms**
+
 ```javascript
 {
   name: String,
@@ -360,6 +381,7 @@ DEFAULT_MESSAGE_TTL=300          # TTL par défaut 5min
 ```
 
 **messages**
+
 ```javascript
 {
   content: String,
@@ -377,12 +399,14 @@ DEFAULT_MESSAGE_TTL=300          # TTL par défaut 5min
 ## 🚀 Déploiement
 
 ### Production
+
 1. Build du client : `cd client && npm run build`
 2. Servir les fichiers statiques via Express
 3. Configurer Nginx comme reverse proxy
 4. Utiliser MongoDB Atlas pour la production
 
 ### Tests
+
 ```bash
 # Lancer le serveur
 cd server && npm run dev
@@ -398,15 +422,18 @@ cd client && npm run dev
 ## 🐛 Dépannage
 
 ### Le message éphémère ne s'efface pas
+
 1. Vérifiez que MongoDB fonctionne
 2. Vérifiez que le service cleanup s'exécute (`MESSAGE_CLEANUP_INTERVAL`)
 3. Vérifiez les logs du serveur
 
 ### Le bouton ne fonctionne pas
+
 1. Redémarrez le client après modification du `.env`
 2. Vérifiez les variables `VITE_EPHEMERAL_*` dans `.env`
 
 ### WebSocket ne connecte pas
+
 1. Vérifiez `VITE_WS_URL` dans `client/.env`
 2. Vérifiez que le port est ouvert (3001)
 

@@ -1,36 +1,35 @@
-import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-
+import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
 
 export default function AuthPage() {
   const { login, register } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    
+    setError("");
+
     if (!isLogin && password !== confirmPassword) {
-      setError('Les mots de passe ne correspondent pas');
+      setError("Les mots de passe ne correspondent pas");
       return;
     }
-    
+
     if (username.length < 2) {
-      setError('Le nom d\'utilisateur doit contenir au moins 2 caractères');
+      setError("Le nom d'utilisateur doit contenir au moins 2 caractères");
       return;
     }
-    
+
     if (password.length < 6) {
-      setError('Le mot de passe doit contenir au moins 6 caractères');
+      setError("Le mot de passe doit contenir au moins 6 caractères");
       return;
     }
-    
+
     setLoading(true);
     try {
       if (isLogin) {
@@ -38,28 +37,39 @@ export default function AuthPage() {
       } else {
         await register(username, password);
       }
-    } catch (err) {
-      setError(err.message);
+    } catch (_err) {
+      setError(_err.message);
     } finally {
       setLoading(false);
     }
   };
 
   const handleGuestLogin = async () => {
-    setUsername('guest');
-    setPassword('guest123');
+    setUsername("guest");
+    setPassword("guest123");
     setLoading(true);
     try {
-      await login('guest', 'guest123');
-    } catch (err) {
-      setError('Compte invité non disponible');
+      await login("guest", "guest123");
+    } catch (_err) {
+      setError("Compte invité non disponible");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="bg-gradient-to-br from-indigo-950 via-purple-950 to-slate-950 relative" style={{ height: '100dvh', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingTop: 'max(0.75rem, env(safe-area-inset-top))', paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
+    <div
+      className="bg-gradient-to-br from-indigo-950 via-purple-950 to-slate-950 relative"
+      style={{
+        height: "100dvh",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        paddingTop: "max(0.75rem, env(safe-area-inset-top))",
+        paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))",
+      }}
+    >
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl animate-pulse"></div>
@@ -77,25 +87,44 @@ export default function AuthPage() {
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
               animationDelay: `${Math.random() * 5}s`,
-              animationDuration: `${3 + Math.random() * 4}s`
+              animationDuration: `${3 + Math.random() * 4}s`,
             }}
           />
         ))}
       </div>
 
       {/* Auth Card */}
-      <div className="relative z-10 w-full max-w-sm px-3 sm:px-6 mx-auto" style={{ maxHeight: 'calc(100dvh - 1.5rem)', overflowY: 'auto', scrollbarWidth: 'none' }}>
+      <div
+        className="relative z-10 w-full max-w-sm px-3 sm:px-6 mx-auto"
+        style={{
+          maxHeight: "calc(100dvh - 1.5rem)",
+          overflowY: "auto",
+          scrollbarWidth: "none",
+        }}
+      >
         <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-4 sm:p-8 shadow-2xl border border-slate-700/50">
           {/* Logo and Title */}
           <div className="text-center mb-3 sm:mb-8">
             <div className="inline-flex items-center justify-center w-10 h-10 sm:w-16 sm:h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl mb-2 shadow-lg shadow-indigo-500/25">
-              <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              <svg
+                className="w-6 h-6 sm:w-8 sm:h-8 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                />
               </svg>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">Arcane Chat</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
+              Arcane Chat
+            </h1>
             <p className="text-slate-400 text-xs sm:text-sm">
-              {isLogin ? 'Bon retour parmi nous !' : 'Rejoignez la communauté'}
+              {isLogin ? "Bon retour parmi nous !" : "Rejoignez la communauté"}
             </p>
           </div>
 
@@ -103,11 +132,23 @@ export default function AuthPage() {
           <form onSubmit={handleSubmit} className="space-y-3">
             {/* Username Input */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300 block">Nom d'utilisateur</label>
+              <label className="text-sm font-medium text-slate-300 block">
+                Nom d'utilisateur
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  <svg
+                    className="w-5 h-5 text-slate-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
                   </svg>
                 </div>
                 <input
@@ -125,15 +166,27 @@ export default function AuthPage() {
 
             {/* Password Input */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-300 block">Mot de passe</label>
+              <label className="text-sm font-medium text-slate-300 block">
+                Mot de passe
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  <svg
+                    className="w-5 h-5 text-slate-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                    />
                   </svg>
                 </div>
                 <input
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
@@ -147,13 +200,38 @@ export default function AuthPage() {
                   className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
                 >
                   {showPassword ? (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                      />
                     </svg>
                   ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
                     </svg>
                   )}
                 </button>
@@ -163,15 +241,27 @@ export default function AuthPage() {
             {/* Confirm Password (only for register) */}
             {!isLogin && (
               <div className="space-y-2 animate-fade-in">
-                <label className="text-sm font-medium text-slate-300 block">Confirmer le mot de passe</label>
+                <label className="text-sm font-medium text-slate-300 block">
+                  Confirmer le mot de passe
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    <svg
+                      className="w-5 h-5 text-slate-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                      />
                     </svg>
                   </div>
                   <input
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
@@ -186,8 +276,18 @@ export default function AuthPage() {
             {/* Error Message */}
             {error && (
               <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-xl animate-shake">
-                <svg className="w-5 h-5 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="w-5 h-5 text-red-400 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
                 <span className="text-red-400 text-sm">{error}</span>
               </div>
@@ -201,14 +301,29 @@ export default function AuthPage() {
             >
               {loading ? (
                 <>
-                  <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  <svg
+                    className="w-5 h-5 animate-spin"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
                   </svg>
                   <span>Chargement...</span>
                 </>
               ) : (
-                <span>{isLogin ? 'Se connecter' : 'Créer un compte'}</span>
+                <span>{isLogin ? "Se connecter" : "Créer un compte"}</span>
               )}
             </button>
           </form>
@@ -229,8 +344,18 @@ export default function AuthPage() {
             disabled={loading}
             className="w-full py-2.5 sm:py-3 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700 text-slate-300 font-medium rounded-xl transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25v0.75z" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25v0.75z"
+              />
             </svg>
             <span>Continuer en tant qu'invité</span>
           </button>
@@ -240,20 +365,24 @@ export default function AuthPage() {
             <button
               onClick={() => {
                 setIsLogin(!isLogin);
-                setError('');
-                setConfirmPassword('');
+                setError("");
+                setConfirmPassword("");
               }}
               className="text-slate-400 hover:text-white text-sm transition-colors"
             >
               {isLogin ? (
                 <>
-                  Pas de compte ?{' '}
-                  <span className="text-indigo-400 hover:text-indigo-300 font-medium">S'inscrire</span>
+                  Pas de compte ?{" "}
+                  <span className="text-indigo-400 hover:text-indigo-300 font-medium">
+                    S'inscrire
+                  </span>
                 </>
               ) : (
                 <>
-                  Déjà un compte ?{' '}
-                  <span className="text-indigo-400 hover:text-indigo-300 font-medium">Se connecter</span>
+                  Déjà un compte ?{" "}
+                  <span className="text-indigo-400 hover:text-indigo-300 font-medium">
+                    Se connecter
+                  </span>
                 </>
               )}
             </button>

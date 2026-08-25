@@ -5,6 +5,7 @@
 Arcane Chat est une **application de messagerie en temps réel** — comme Discord ou WhatsApp — que tu peux utiliser dans un navigateur web sur téléphone ou ordinateur.
 
 Les utilisateurs peuvent :
+
 - Se connecter avec un pseudo et un mot de passe
 - Rejoindre des **salons de groupe** (comme des canaux Discord)
 - S'envoyer des **messages privés** (DM = Direct Message)
@@ -161,14 +162,14 @@ JWT = JSON Web Token. C'est comme un **badge d'accès** numérique.
 
 ## ☁️ Services externes utilisés
 
-| Service | Rôle | Gratuit ? |
-|---|---|---|
-| **MongoDB Atlas** | Base de données dans le cloud | ✅ (512MB) |
-| **Cloudinary** | Stockage images/audio/vidéo | ✅ (25GB) |
-| **Metered.ca** | Serveur TURN pour appels vidéo | ✅ (limité) |
-| **Giphy API** | Recherche et envoi de GIFs | ✅ |
-| **Vercel** | Hébergement du frontend React | ✅ |
-| **Render** | Hébergement du backend Node.js | ✅ |
+| Service           | Rôle                           | Gratuit ?   |
+| ----------------- | ------------------------------ | ----------- |
+| **MongoDB Atlas** | Base de données dans le cloud  | ✅ (512MB)  |
+| **Cloudinary**    | Stockage images/audio/vidéo    | ✅ (25GB)   |
+| **Metered.ca**    | Serveur TURN pour appels vidéo | ✅ (limité) |
+| **Giphy API**     | Recherche et envoi de GIFs     | ✅          |
+| **Vercel**        | Hébergement du frontend React  | ✅          |
+| **Render**        | Hébergement du backend Node.js | ✅          |
 
 ---
 
@@ -207,6 +208,7 @@ Puis ouvrir `http://localhost`
 ## 🗃️ Les données stockées en base (MongoDB)
 
 ### Collection `users`
+
 ```js
 {
   username: "Alice",
@@ -218,6 +220,7 @@ Puis ouvrir `http://localhost`
 ```
 
 ### Collection `rooms`
+
 ```js
 {
   name: "général",
@@ -228,6 +231,7 @@ Puis ouvrir `http://localhost`
 ```
 
 ### Collection `messages`
+
 ```js
 {
   room: ObjectId("..."),        // quel salon
@@ -244,6 +248,7 @@ Puis ouvrir `http://localhost`
 ```
 
 ### Collection `dms`
+
 ```js
 {
   from: ObjectId("..."),    // expéditeur

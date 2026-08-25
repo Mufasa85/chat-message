@@ -5,9 +5,16 @@
   "scripts": {
     "setup": "bash setup.sh",
     "ngrok-test": "bash setup-ngrok-test.sh",
+    "prepare": "husky",
     "dev:server": "cd server && npm run dev",
     "dev:client": "cd client && npm run dev",
-    "dev": "npm run dev:server & npm run dev:client"
+    "dev": "npm run dev:server & npm run dev:client",
+    "lint:client": "cd client && npm run lint",
+    "lint:server": "cd server && npm run lint",
+    "lint": "npm run lint:client && npm run lint:server",
+    "test:client": "cd client && npm test",
+    "test:server": "cd server && npm test",
+    "test": "npm run test:client && npm run test:server"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -20,6 +27,8 @@
     "ws": "^8.21.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-basic-ssl": "^2.3.0"
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.3.0"
   }
 }

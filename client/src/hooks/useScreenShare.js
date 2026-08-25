@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from "react";
 
 /**
  * useScreenShare — Partage d'écran pendant un appel vidéo
@@ -22,7 +22,7 @@ export const useScreenShare = ({ peerConnection, localVideoRef }) => {
     if (!peerConnection) return;
     try {
       const screenStream = await navigator.mediaDevices.getDisplayMedia({
-        video: { cursor: 'always' },
+        video: { cursor: "always" },
         audio: false,
       });
 
@@ -31,7 +31,7 @@ export const useScreenShare = ({ peerConnection, localVideoRef }) => {
 
       const sender = peerConnection
         .getSenders()
-        .find((s) => s.track?.kind === 'video');
+        .find((s) => s.track?.kind === "video");
 
       if (sender) {
         originalVideoTrackRef.current = sender.track;
@@ -46,10 +46,11 @@ export const useScreenShare = ({ peerConnection, localVideoRef }) => {
 
       setIsSharing(true);
     } catch (err) {
-      if (err.name !== 'NotAllowedError') {
-        console.error('[ScreenShare] Erreur:', err.message);
+      if (err.name !== "NotAllowedError") {
+        console.error("[ScreenShare] Erreur:", err.message);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [peerConnection, localVideoRef]);
 
   const stopScreenShare = useCallback(async () => {
@@ -61,7 +62,7 @@ export const useScreenShare = ({ peerConnection, localVideoRef }) => {
       if (originalVideoTrackRef.current) {
         const sender = peerConnection
           .getSenders()
-          .find((s) => s.track?.kind === 'video');
+          .find((s) => s.track?.kind === "video");
         if (sender) {
           await sender.replaceTrack(originalVideoTrackRef.current);
         }
@@ -76,7 +77,7 @@ export const useScreenShare = ({ peerConnection, localVideoRef }) => {
 
       setIsSharing(false);
     } catch (err) {
-      console.error('[ScreenShare] Erreur arrêt:', err.message);
+      console.error("[ScreenShare] Erreur arrêt:", err.message);
     }
   }, [peerConnection, localVideoRef]);
 

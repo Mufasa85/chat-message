@@ -1,0 +1,7 @@
+{
+  "client/**/*.{js,jsx}": [
+    "cd client && npm run lint:fix",
+    "cd client && npm test"
+  ],
+  "server/**/*.js": ["cd server && npm run lint:fix", "cd server && npm test"]
+}

@@ -334,7 +334,9 @@ https://github.com/Mufasa85/chat-message/actions
 ```javascript
 // Ouvrir la console sur https://chat-message-rho.vercel.app
 // et exécuter :
-const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+const pc = new RTCPeerConnection({
+  iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+});
 console.log(pc);
 ```
 
@@ -345,10 +347,10 @@ console.log(pc);
 ```javascript
 // Dans useWebRTC.js, ajouter temporairement :
 pc.onconnectionstatechange = (e) => {
-  console.log('[WebRTC] connectionState:', pc.connectionState);
+  console.log("[WebRTC] connectionState:", pc.connectionState);
 };
 pc.oniceconnectionstatechange = (e) => {
-  console.log('[WebRTC] iceConnectionState:', pc.iceConnectionState);
+  console.log("[WebRTC] iceConnectionState:", pc.iceConnectionState);
 };
 ```
 
@@ -375,9 +377,9 @@ cat client/.env | grep TURN
 
 ```javascript
 // Dans la console du navigateur qui reçoit l'appel :
-const video = document.querySelector('video');
-console.log('srcObject:', video?.srcObject);
-console.log('tracks:', video?.srcObject?.getTracks());
+const video = document.querySelector("video");
+console.log("srcObject:", video?.srcObject);
+console.log("tracks:", video?.srcObject?.getTracks());
 ```
 
 **À quoi ça sert :** Vérifie que le `MediaStream` distant est bien attaché à l'élément `<video>` ou `<audio>`.
@@ -387,8 +389,9 @@ console.log('tracks:', video?.srcObject?.getTracks());
 ```javascript
 // Temporairement, dans la console du navigateur :
 window._debugIce = (pc) => {
-  pc.onicecandidate = (e) => console.log('ICE candidate:', e.candidate);
-  pc.onicegatheringstatechange = () => console.log('ICE gathering:', pc.iceGatheringState);
+  pc.onicecandidate = (e) => console.log("ICE candidate:", e.candidate);
+  pc.onicegatheringstatechange = () =>
+    console.log("ICE gathering:", pc.iceGatheringState);
 };
 ```
 

@@ -3,7 +3,7 @@
  * Supprime automatiquement les messages de la BDD MongoDB après leur expiration
  */
 
-const Message = require('../models/Message');
+const Message = require("../models/Message");
 
 class CleanupService {
   constructor() {
@@ -17,12 +17,14 @@ class CleanupService {
    */
   start(intervalMs = 30000) {
     if (this.intervalId) {
-      console.log('[CleanupService] Service déjà démarré');
+      console.log("[CleanupService] Service déjà démarré");
       return;
     }
 
-    console.log(`[CleanupService] Démarrage du service (intervalle: ${intervalMs}ms)`);
-    
+    console.log(
+      `[CleanupService] Démarrage du service (intervalle: ${intervalMs}ms)`,
+    );
+
     // Nettoyage initial
     this.cleanup();
 
@@ -37,7 +39,7 @@ class CleanupService {
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;
-      console.log('[CleanupService] Service arrêté');
+      console.log("[CleanupService] Service arrêté");
     }
   }
 
@@ -47,7 +49,7 @@ class CleanupService {
    */
   async cleanup() {
     if (this.isRunning) {
-      console.log('[CleanupService] Nettoyage déjà en cours, ignoré');
+      console.log("[CleanupService] Nettoyage déjà en cours, ignoré");
       return 0;
     }
 
@@ -57,16 +59,18 @@ class CleanupService {
     try {
       const result = await Message.deleteMany({
         ephemeral: true,
-        expiresAt: { $lte: now }
+        expiresAt: { $lte: now },
       });
 
       if (result.deletedCount > 0) {
-        console.log(`[CleanupService] ${result.deletedCount} message(s) éphémère(s) supprimé(s)`);
+        console.log(
+          `[CleanupService] ${result.deletedCount} message(s) éphémère(s) supprimé(s)`,
+        );
       }
 
       return result.deletedCount;
     } catch (error) {
-      console.error('[CleanupService] Erreur lors du nettoyage:', error);
+      console.error("[CleanupService] Erreur lors du nettoyage:", error);
       return 0;
     } finally {
       this.isRunning = false;
@@ -81,11 +85,14 @@ class CleanupService {
     try {
       const result = await Message.deleteOne({
         _id: messageId,
-        ephemeral: true
+        ephemeral: true,
       });
       return result.deletedCount > 0;
     } catch (error) {
-      console.error('[CleanupService] Erreur lors de la suppression du message:', error);
+      console.error(
+        "[CleanupService] Erreur lors de la suppression du message:",
+        error,
+      );
       return false;
     }
   }
@@ -100,7 +107,7 @@ class CleanupService {
     return Message.find({
       room: roomId,
       ephemeral: true,
-      expiresAt: { $gt: now }
+      expiresAt: { $gt: now },
     }).sort({ createdAt: -1 });
   }
 }

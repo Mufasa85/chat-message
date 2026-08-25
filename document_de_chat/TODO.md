@@ -3,4 +3,5 @@
 - [ ] Redémarrer serveur et client
 - [ ] Vérifier console navigateur: code 4001 ne déclenche plus de reconnexions en boucle
 
-
+- [ ] mettre le husk
+- [ ] faire le test unitaire et test statiques

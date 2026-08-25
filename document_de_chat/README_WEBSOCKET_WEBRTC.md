@@ -2,11 +2,11 @@
 
 ## Pourquoi deux technologies différentes ?
 
-| | WebSocket | WebRTC |
-|---|---|---|
-| **Pour quoi** | Texte, notifications, signaux | Audio, vidéo en direct |
-| **Passe par le serveur** | ✅ Toujours | ❌ Direct entre navigateurs |
-| **Vitesse** | Rapide | Ultra-rapide (peer-to-peer) |
+|                          | WebSocket                                    | WebRTC                      |
+| ------------------------ | -------------------------------------------- | --------------------------- |
+| **Pour quoi**            | Texte, notifications, signaux                | Audio, vidéo en direct      |
+| **Passe par le serveur** | ✅ Toujours                                  | ❌ Direct entre navigateurs |
+| **Vitesse**              | Rapide                                       | Ultra-rapide (peer-to-peer) |
 | **Usage dans le projet** | Messages, typing, DMs, notifications d'appel | Flux vidéo/audio de l'appel |
 
 ---
@@ -44,16 +44,19 @@ Serveur → "new_message: Bonjour" → Client C
 
 export const useWebSocket = ({ token, onMessage, onOpen, onClose }) => {
 ```
+
 Ce hook reçoit :
+
 - `token` : le JWT de l'utilisateur (pour s'authentifier)
 - `onMessage` : fonction appelée quand un message arrive
 - `onOpen` / `onClose` : fonctions appelées quand la connexion s'ouvre/ferme
 
 ```js
-  const wsRef = useRef(null);           // Référence à la connexion WebSocket
-  const reconnectTimer = useRef(null);  // Timer pour la reconnexion automatique
-  const attemptsRef = useRef(0);        // Nombre de tentatives de reconnexion
+const wsRef = useRef(null); // Référence à la connexion WebSocket
+const reconnectTimer = useRef(null); // Timer pour la reconnexion automatique
+const attemptsRef = useRef(0); // Nombre de tentatives de reconnexion
 ```
+
 `useRef` = une boîte qui garde une valeur **sans provoquer de re-render**.
 Utile pour stocker la connexion WS car si on la mettait dans `useState`, React re-rendrerait tout à chaque fois.
 
@@ -61,41 +64,46 @@ Utile pour stocker la connexion WS car si on la mettait dans `useState`, React r
   const connect = () => {
     const ws = new WebSocket(`${WS_URL}?token=${token}`);
 ```
+
 On crée la connexion. Le token est passé dans l'URL pour que le serveur puisse identifier qui se connecte.
 
 ```js
-    ws.onopen = () => {
-      attemptsRef.current = 0;  // Réinitialise le compteur de tentatives
-      onOpenRef.current?.();    // Appelle la fonction onOpen si elle existe
-    };
+ws.onopen = () => {
+  attemptsRef.current = 0; // Réinitialise le compteur de tentatives
+  onOpenRef.current?.(); // Appelle la fonction onOpen si elle existe
+};
 ```
+
 Quand la connexion est établie.
 
 ```js
-    ws.onmessage = (e) => {
-      onMessageRef.current?.(JSON.parse(e.data));
-    };
+ws.onmessage = (e) => {
+  onMessageRef.current?.(JSON.parse(e.data));
+};
 ```
+
 Quand un message arrive du serveur. `e.data` est une chaîne JSON — on la parse pour obtenir l'objet `{ event, data }`.
 
 ```js
-    ws.onclose = (e) => {
-      if (e.code === 4001) return;  // Code "non autorisé" → pas de reconnexion
-      
-      const delay = Math.min(1000 * 2 ** attemptsRef.current, 30000);
-      // 1re tentative : 1s, 2e : 2s, 3e : 4s, 4e : 8s... max 30s
-      reconnectTimer.current = setTimeout(connect, delay);
-    };
+ws.onclose = (e) => {
+  if (e.code === 4001) return; // Code "non autorisé" → pas de reconnexion
+
+  const delay = Math.min(1000 * 2 ** attemptsRef.current, 30000);
+  // 1re tentative : 1s, 2e : 2s, 3e : 4s, 4e : 8s... max 30s
+  reconnectTimer.current = setTimeout(connect, delay);
+};
 ```
+
 **Reconnexion exponentielle** : si la connexion coupe (réseau instable), on réessaie automatiquement avec des délais croissants.
 
 ```js
-  const emit = useCallback((event, data) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ event, data }));
-    }
-  }, []);
+const emit = useCallback((event, data) => {
+  if (wsRef.current?.readyState === WebSocket.OPEN) {
+    wsRef.current.send(JSON.stringify({ event, data }));
+  }
+}, []);
 ```
+
 La fonction `emit` — c'est ce qu'on appelle partout dans le projet pour envoyer un message au serveur.
 Elle vérifie d'abord que la connexion est ouverte (`WebSocket.OPEN = 1`).
 
@@ -114,7 +122,7 @@ ws.on('message', async (raw) => {
     case 'send_message':
       // 1. Sauvegarder en base de données
       const msg = await Message.create({ ... });
-      
+
       // 2. Diffuser à tous les membres du salon
       broadcast(roomId, 'new_message', msg);
       break;
@@ -133,6 +141,7 @@ ws.on('message', async (raw) => {
 ```
 
 La fonction `broadcast` envoie à **tous** les clients connectés à un salon :
+
 ```js
 function broadcast(roomId, event, data) {
   for (const [ws, info] of clients) {
@@ -150,38 +159,48 @@ function broadcast(roomId, event, data) {
 C'est le **cerveau** qui reçoit tous les événements WebSocket et met à jour l'interface :
 
 ```js
-const onMessage = useCallback(({ event, data }) => {
-  switch (event) {
+const onMessage = useCallback(
+  ({ event, data }) => {
+    switch (event) {
+      case "new_message":
+        // Ajouter le message à la liste affichée
+        setMessages((prev) => [...prev, data]);
+        // Si c'est un autre salon → incrémenter le badge non-lu
+        if (data.room !== currentRoom._id) {
+          setUnreadCounts((prev) => ({
+            ...prev,
+            [data.room]: prev[data.room] + 1,
+          }));
+        }
+        break;
 
-    case 'new_message':
-      // Ajouter le message à la liste affichée
-      setMessages((prev) => [...prev, data]);
-      // Si c'est un autre salon → incrémenter le badge non-lu
-      if (data.room !== currentRoom._id) {
-        setUnreadCounts((prev) => ({ ...prev, [data.room]: prev[data.room] + 1 }));
-      }
-      break;
+      case "typing":
+        // Afficher "Alice est en train de taper..."
+        if (data.isTyping) {
+          setTypingUsers((prev) => [
+            ...prev,
+            { userId: data.userId, username: data.username },
+          ]);
+        } else {
+          setTypingUsers((prev) =>
+            prev.filter((u) => u.userId !== data.userId),
+          );
+        }
+        break;
 
-    case 'typing':
-      // Afficher "Alice est en train de taper..."
-      if (data.isTyping) {
-        setTypingUsers((prev) => [...prev, { userId: data.userId, username: data.username }]);
-      } else {
-        setTypingUsers((prev) => prev.filter(u => u.userId !== data.userId));
-      }
-      break;
+      case "incoming_call":
+        // Déclencher l'UI d'appel entrant
+        webrtcRef.current.handleIncomingCall(data);
+        break;
 
-    case 'incoming_call':
-      // Déclencher l'UI d'appel entrant
-      webrtcRef.current.handleIncomingCall(data);
-      break;
-
-    case 'ice_candidate':
-      // Passer le candidat réseau à WebRTC
-      webrtcRef.current.handleIceCandidate(data);
-      break;
-  }
-}, [currentRoom]);
+      case "ice_candidate":
+        // Passer le candidat réseau à WebRTC
+        webrtcRef.current.handleIceCandidate(data);
+        break;
+    }
+  },
+  [currentRoom],
+);
 ```
 
 ---
@@ -243,22 +262,30 @@ Bob   (192.168.0.10, derrière Orange)
 Pour résoudre ça, WebRTC utilise **trois types de serveurs** :
 
 ### STUN (Session Traversal Utilities for NAT)
+
 Découvre ton adresse IP publique :
+
 ```
 Alice → Serveur STUN : "Quelle est mon adresse publique ?"
 Serveur STUN → Alice : "Tu es vue comme 82.45.12.3:54321"
 ```
+
 Gratuit, utilisé pour les connexions simples (même opérateur).
 
 ### TURN (Traversal Using Relays around NAT)
+
 Si STUN ne suffit pas (réseaux très restrictifs), TURN relaie les données :
+
 ```
 Alice → Serveur TURN → Bob
 ```
+
 Payant en général — ici on utilise **Metered.ca** (gratuit limité).
 
 ### ICE (Interactive Connectivity Establishment)
+
 Essaie toutes les possibilités dans l'ordre pour trouver la meilleure connexion :
+
 1. Connexion directe (même réseau)
 2. Via STUN (IP publique)
 3. Via TURN (relais)
@@ -323,22 +350,28 @@ ALICE (appelle)                                    BOB (reçoit)
 ## Le hook `useWebRTC.js` — Les fonctions clés
 
 ### `getLocalStream(type)`
+
 ```js
 const stream = await navigator.mediaDevices.getUserMedia({
   audio: {
-    echoCancellation: true,   // Annule l'écho (pas de larsen)
-    noiseSuppression: true,   // Réduit le bruit de fond
-    autoGainControl:  true,   // Ajuste le volume automatiquement
+    echoCancellation: true, // Annule l'écho (pas de larsen)
+    noiseSuppression: true, // Réduit le bruit de fond
+    autoGainControl: true, // Ajuste le volume automatiquement
   },
-  video: type === 'video' ? {
-    width:     { ideal: 640 },  // Résolution idéale
-    frameRate: { ideal: 24 },   // 24 images/seconde
-  } : false,
+  video:
+    type === "video"
+      ? {
+          width: { ideal: 640 }, // Résolution idéale
+          frameRate: { ideal: 24 }, // 24 images/seconde
+        }
+      : false,
 });
 ```
+
 Demande l'accès à la caméra et au micro. Le navigateur affiche la popup "Autoriser ?".
 
 ### `createPeerConnection(targetId)`
+
 ```js
 const iceConfig = await fetchIceServers(); // Récupère les serveurs TURN de Metered
 const pc = new RTCPeerConnection(iceConfig);
@@ -347,7 +380,7 @@ const pc = new RTCPeerConnection(iceConfig);
 pc.onicecandidate = (e) => {
   if (e.candidate) {
     // On l'envoie à l'autre via WebSocket
-    emit('ice_candidate', { targetUserId: targetId, candidate: e.candidate });
+    emit("ice_candidate", { targetUserId: targetId, candidate: e.candidate });
   }
 };
 
@@ -358,35 +391,38 @@ pc.ontrack = (e) => {
 ```
 
 ### `startCall(targetUser, type)` — Côté appelant
+
 ```js
-const stream  = await getLocalStream(type);    // 1. Accès caméra
-const pc      = await createPeerConnection(id); // 2. Créer la connexion
-const offer   = await pc.createOffer();         // 3. Créer l'offre
-await pc.setLocalDescription(offer);            // 4. Enregistrer localement
-emit('call_offer', { sdp: offer, callType: type }); // 5. Envoyer à l'autre
+const stream = await getLocalStream(type); // 1. Accès caméra
+const pc = await createPeerConnection(id); // 2. Créer la connexion
+const offer = await pc.createOffer(); // 3. Créer l'offre
+await pc.setLocalDescription(offer); // 4. Enregistrer localement
+emit("call_offer", { sdp: offer, callType: type }); // 5. Envoyer à l'autre
 ```
 
 ### `acceptCall()` — Côté receveur
+
 ```js
-const stream = await getLocalStream(type);       // 1. Accès caméra
-const pc     = await createPeerConnection(id);   // 2. Créer la connexion
-await pc.setRemoteDescription(sdp);              // 3. Enregistrer l'offre reçue
-const answer = await pc.createAnswer();          // 4. Créer la réponse
-await pc.setLocalDescription(answer);            // 5. Enregistrer localement
-emit('call_answer', { sdp: answer, accepted: true }); // 6. Répondre
+const stream = await getLocalStream(type); // 1. Accès caméra
+const pc = await createPeerConnection(id); // 2. Créer la connexion
+await pc.setRemoteDescription(sdp); // 3. Enregistrer l'offre reçue
+const answer = await pc.createAnswer(); // 4. Créer la réponse
+await pc.setLocalDescription(answer); // 5. Enregistrer localement
+emit("call_answer", { sdp: answer, accepted: true }); // 6. Répondre
 ```
 
 ### Optimisation du bitrate (éviter les freezes)
+
 ```js
 pc.onconnectionstatechange = () => {
-  if (pc.connectionState === 'connected') {
+  if (pc.connectionState === "connected") {
     // Limiter la qualité pour les réseaux mobiles
     pc.getSenders().forEach(async (sender) => {
       const params = sender.getParameters();
-      if (sender.track.kind === 'video') {
+      if (sender.track.kind === "video") {
         params.encodings[0].maxBitrate = 500_000; // Max 500 kbps pour la vidéo
-      } else if (sender.track.kind === 'audio') {
-        params.encodings[0].maxBitrate = 64_000;  // Max 64 kbps pour l'audio
+      } else if (sender.track.kind === "audio") {
+        params.encodings[0].maxBitrate = 64_000; // Max 64 kbps pour l'audio
       }
       await sender.setParameters(params);
     });
@@ -437,7 +473,7 @@ useWebRTC.js                ChatContext.jsx              WsServer.js
 ```js
 async function fetchIceServers() {
   const res = await fetch(
-    `https://chat-message.metered.live/api/v1/turn/credentials?apiKey=${METERED_API_KEY}`
+    `https://chat-message.metered.live/api/v1/turn/credentials?apiKey=${METERED_API_KEY}`,
   );
   const servers = await res.json();
   // servers = [
